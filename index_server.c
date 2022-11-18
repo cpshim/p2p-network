@@ -313,13 +313,14 @@ int main(int argc, char *argv[])
 			// 	}
 			// }
 		case 'T':
-			int deleteContentIndex;
+			int deleteContentIndex, deletePeerIndex;
 			strncpy(readPeerName, rpdu.data, 10);
 			strncpy(readContentName, rpdu.data + 10, 10);
 			for (i = 0; i < 3; i++) 
 			{
 				if (strcmp(readPeerName, peerList[i].peerName) != 0)
 				{
+					deletePeerIndex = i;
 					for (j = 0; j < 5; j++)
 					{
 						if (strcmp(readContentName, peerList[i].database[j].contentName) != 0)
@@ -330,8 +331,14 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			
+
+			for (i = deleteContentIndex; i < 4; i++)
+			{
+				peerList[deletePeerIndex].database[i] = peerList[deletePeerIndex].database[i+1];
+			}
+			numPeer -= 1;
 			break;
+			
 		case 'C':
 			filePointer = fopen(rpdu.data, "r");
 
