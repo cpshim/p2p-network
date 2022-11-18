@@ -312,7 +312,26 @@ int main(int argc, char *argv[])
 			// 		}
 			// 	}
 			// }
-
+		case 'T':
+			int deleteContentIndex;
+			strncpy(readPeerName, rpdu.data, 10);
+			strncpy(readContentName, rpdu.data + 10, 10);
+			for (i = 0; i < 3; i++) 
+			{
+				if (strcmp(readPeerName, peerList[i].peerName) != 0)
+				{
+					for (j = 0; j < 5; j++)
+					{
+						if (strcmp(readContentName, peerList[i].database[j].contentName) != 0)
+						{
+							deleteContentIndex = j;
+							break;
+						}
+					}
+				}
+			}
+			
+			break;
 		case 'C':
 			filePointer = fopen(rpdu.data, "r");
 
