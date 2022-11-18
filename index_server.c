@@ -200,168 +200,167 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-		}
-		// switch (numContent)
-		// { // this will help create new struct content
-		// case 0:
-		// 	strcpy(a.peerName, readPeerName);
-		// 	strcpy(a.contentName, readContentName);
-		// 	strcpy(a.address, readAddress);
-		// 	database[numContent] = a;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 1:
-		// 	strcpy(b.peerName, readPeerName);
-		// 	strcpy(b.contentName, readContentName);
-		// 	strcpy(b.address, readAddress);
-		// 	database[numContent] = b;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 2:
-		// 	strcpy(c.peerName, readPeerName);
-		// 	strcpy(c.contentName, readContentName);
-		// 	strcpy(c.address, readAddress);
-		// 	database[numContent] = c;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 3:
-		// 	strcpy(d.peerName, readPeerName);
-		// 	strcpy(d.contentName, readContentName);
-		// 	strcpy(d.address, readAddress);
-		// 	database[numContent] = d;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 4:
-		// 	strcpy(e.peerName, readPeerName);
-		// 	strcpy(e.contentName, readContentName);
-		// 	strcpy(e.address, readAddress);
-		// 	database[numContent] = e;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 5:
-		// 	strcpy(f.peerName, readPeerName);
-		// 	strcpy(f.contentName, readContentName);
-		// 	strcpy(f.address, readAddress);
-		// 	database[numContent] = f;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// case 6:
-		// 	strcpy(g.peerName, readPeerName);
-		// 	strcpy(g.contentName, readContentName);
-		// 	strcpy(g.address, readAddress);
-		// 	database[numContent] = g;
-		// 	numContent++;
-		// 	spdu.type = 'A';
-		// 	strcpy(spdu.data, "Success");
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// default:
-		// 	spdu.type = 'E';
-		// 	strcpy(spdu.data, "Error: No more space for new content");
-		// 	printf("%s\n", spdu.data);
-		// 	sendto(s, &spdu, sizeof(spdu), 0,
-		// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-		// 	break;
-		// }
+			break;
+			// switch (numContent)
+			// { // this will help create new struct content
+			// case 0:
+			// 	strcpy(a.peerName, readPeerName);
+			// 	strcpy(a.contentName, readContentName);
+			// 	strcpy(a.address, readAddress);
+			// 	database[numContent] = a;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 1:
+			// 	strcpy(b.peerName, readPeerName);
+			// 	strcpy(b.contentName, readContentName);
+			// 	strcpy(b.address, readAddress);
+			// 	database[numContent] = b;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 2:
+			// 	strcpy(c.peerName, readPeerName);
+			// 	strcpy(c.contentName, readContentName);
+			// 	strcpy(c.address, readAddress);
+			// 	database[numContent] = c;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 3:
+			// 	strcpy(d.peerName, readPeerName);
+			// 	strcpy(d.contentName, readContentName);
+			// 	strcpy(d.address, readAddress);
+			// 	database[numContent] = d;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 4:
+			// 	strcpy(e.peerName, readPeerName);
+			// 	strcpy(e.contentName, readContentName);
+			// 	strcpy(e.address, readAddress);
+			// 	database[numContent] = e;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 5:
+			// 	strcpy(f.peerName, readPeerName);
+			// 	strcpy(f.contentName, readContentName);
+			// 	strcpy(f.address, readAddress);
+			// 	database[numContent] = f;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// case 6:
+			// 	strcpy(g.peerName, readPeerName);
+			// 	strcpy(g.contentName, readContentName);
+			// 	strcpy(g.address, readAddress);
+			// 	database[numContent] = g;
+			// 	numContent++;
+			// 	spdu.type = 'A';
+			// 	strcpy(spdu.data, "Success");
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// default:
+			// 	spdu.type = 'E';
+			// 	strcpy(spdu.data, "Error: No more space for new content");
+			// 	printf("%s\n", spdu.data);
+			// 	sendto(s, &spdu, sizeof(spdu), 0,
+			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
+			// 	break;
+			// }
 
-		// if ((*numContent < 100) && (*numUsers < 10))
-		// {
-		// 	database[*numUsers][0][0] = readPeerName;
-		// 	database[*numUsers][*numContent][0] = readContentName;
-		// 	database[*numUsers][*numContent][1] = readAddress;
-		// }
-		// database[i] = //add content into database
+			// if ((*numContent < 100) && (*numUsers < 10))
+			// {
+			// 	database[*numUsers][0][0] = readPeerName;
+			// 	database[*numUsers][*numContent][0] = readContentName;
+			// 	database[*numUsers][*numContent][1] = readAddress;
+			// }
+			// database[i] = //add content into database
 
-		// create tcp socket
-	}
-	// for (i = 0; i < 10; i++) {
-	// 	if (strcmp(readPeerName, database[i][0][0].peerName) != 0) { //strcmp output 0 if true
-	// 		for (j = 0; j < 100; j++) {
-	// 			if (strcmp(readContentName, database[i][j][0].contentName) != 0) {
-	// 				spdu.type = 'E';
-	// 				strcpy(spdu.data, "Error: Content already registered");
-	// 				printf("%s\n",spdu.data);
-	// 				sendto(s, &spdu, sizeof(spdu), 0,
-	// 					(struct sockaddr *)&fsin, sizeof(fsin));
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// }
+			// create tcp socket
+			// for (i = 0; i < 10; i++) {
+			// 	if (strcmp(readPeerName, database[i][0][0].peerName) != 0) { //strcmp output 0 if true
+			// 		for (j = 0; j < 100; j++) {
+			// 			if (strcmp(readContentName, database[i][j][0].contentName) != 0) {
+			// 				spdu.type = 'E';
+			// 				strcpy(spdu.data, "Error: Content already registered");
+			// 				printf("%s\n",spdu.data);
+			// 				sendto(s, &spdu, sizeof(spdu), 0,
+			// 					(struct sockaddr *)&fsin, sizeof(fsin));
+			// 				break;
+			// 			}
+			// 		}
+			// 	}
+			// }
 
-case 'C':
-	filePointer = fopen(rpdu.data, "r");
+		case 'C':
+			filePointer = fopen(rpdu.data, "r");
 
-	if (filePointer == NULL)
-	{
-		spdu.type = 'E';
-		strcpy(spdu.data, "Error opening file");
-		printf("%s\n", spdu.data);
-		sendto(s, &spdu, sizeof(spdu), 0,
-			   (struct sockaddr *)&fsin, sizeof(fsin));
-	}
-
-	if (filePointer != NULL)
-	{
-		lstat(rpdu.data, &fileStats);
-		fileSize = (int)fileStats.st_size;
-
-		for (i = 0; i < fileSize; i += 99)
-		{
-			fseek(filePointer, i, SEEK_SET);
-			bytesRead = fread(rbuf, sizeof(rbuf) - 1, 1, filePointer);
-
-			strcpy(spdu.data, rbuf);
-
-			if (feof(filePointer))
+			if (filePointer == NULL)
 			{
-				spdu.type = 'F';
-			}
-			else
-			{
-				spdu.type = 'D';
+				spdu.type = 'E';
+				strcpy(spdu.data, "Error opening file");
+				printf("%s\n", spdu.data);
+				sendto(s, &spdu, sizeof(spdu), 0,
+					   (struct sockaddr *)&fsin, sizeof(fsin));
 			}
 
-			sendto(s, &spdu, sizeof(spdu), 0,
-				   (struct sockaddr *)&fsin, sizeof(fsin));
+			if (filePointer != NULL)
+			{
+				lstat(rpdu.data, &fileStats);
+				fileSize = (int)fileStats.st_size;
 
-			bzero(spdu.data, 100);
-			bzero(rbuf, 100);
+				for (i = 0; i < fileSize; i += 99)
+				{
+					fseek(filePointer, i, SEEK_SET);
+					bytesRead = fread(rbuf, sizeof(rbuf) - 1, 1, filePointer);
+
+					strcpy(spdu.data, rbuf);
+
+					if (feof(filePointer))
+					{
+						spdu.type = 'F';
+					}
+					else
+					{
+						spdu.type = 'D';
+					}
+
+					sendto(s, &spdu, sizeof(spdu), 0,
+						   (struct sockaddr *)&fsin, sizeof(fsin));
+
+					bzero(spdu.data, 100);
+					bzero(rbuf, 100);
+				}
+			}
+			fclose(filePointer);
+			break;
+
+		case 'E':
+			printf("Error\n");
+			break;
 		}
 	}
-	fclose(filePointer);
-	break;
-
-case 'E':
-	printf("Error\n");
-	break;
-}
-}
 }
 
 // int checkInDatabase(char readPeerName[], char readContentName[], struct content *database[])
