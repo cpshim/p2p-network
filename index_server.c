@@ -19,6 +19,7 @@
 int main(int argc, char *argv[])
 {
 	struct sockaddr_in fsin; /* the from address of a client	*/
+	const MAX_NUM_OF_PEER = 3, MAX_NUM_OF_CONTENT = 5;
 	typedef struct
 	{
 		char peerName[10];
@@ -28,11 +29,11 @@ int main(int argc, char *argv[])
 	} peer;
 	typedef struct
 	{
-		peer peerList[3];
+		peer peerList[MAX_NUM_OF_PEER];
 		char contentName[10];
 		int numOfPeer;
 	} content;
-	content contentList[5];
+	content contentList[MAX_NUM_OF_CONTENT];
 	struct pdu
 	{
 		char type;
@@ -87,12 +88,16 @@ int main(int argc, char *argv[])
 	listen(s, 5);
 	alen = sizeof(fsin);
 
-	for (i = 0; i < 5; i++)
+	printf("Before Init");
+	// initialize database
+	for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 	{
 		strcpy(contentList[i].contentName, ' ');
 		contentList[i].numOfPeer = 0;
-		for (j = 0; j < 3; j++)
+		printf("Init Content");
+		for (j = 0; j < MAX_NUM_OF_PEER; j++)
 		{
+			printf("Init Peer");
 			strcpy(contentList[i].peerList[j].peerName, ' ');
 			strcpy(contentList[i].peerList[j].address, ' ');
 			strcpy(contentList[i].peerList[j].port, ' ');
@@ -109,6 +114,8 @@ int main(int argc, char *argv[])
 
 		switch (rpdu.type)
 		{
+		printf("Recieve type %s\n", rpdu.type);
+		printf("Recieve data %s\n", rpdu.data);
 		case 'R':
 			endOfPeerName = 0;
 			endOfContentName = 0;
@@ -137,13 +144,13 @@ int main(int argc, char *argv[])
 			// if (checkInDatabase(readPeerName, readContentName, database))
 			duplicatePeer = 0;
 			duplicateContent = 0;
-			for (i = 0; i < 5; i++)
+			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
 				if (strcmp(readContentName, contentList[i].contentName) != 0)
 				{
 					duplicateContentIndex = i;
 					duplicateContent = 1;
-					for (j = 0; j < 5; j++)
+					for (j = 0; j < MAX_NUM_OF_PEER; j++)
 					{
 						if (strcmp(readPeerName, contentList[i].peerList[j].peerName) != 0)
 						{
@@ -176,12 +183,17 @@ int main(int argc, char *argv[])
 			{
 				if (duplicateContent)
 				{
-					if (contentList[i].numOfPeer < 3)
+
+					if (contentList[i].numOfPeer < MAX_NUM_OF_PEER)
 					{
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].peerName, readPeerName);
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].address, readAddress);
 
 						contentList[duplicateContentIndex].numOfPeer++;
+						printf("ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %s\n",
+							   contentList[duplicateContentIndex].contentName,
+							   contentList[duplicateContentIndex].peerList[0].peerName, contentList[duplicateContentIndex].peerList[0].address,
+							   contentList[duplicateContentIndex].numOfPeer);
 					}
 					else
 					{
@@ -228,7 +240,7 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					if (numOfContent < 5)
+					if (numOfContent < MAX_NUM_OF_CONTENT)
 					{
 						strcpy(contentList[numOfContent].contentName, readContentName);
 						strcpy(contentList[numOfContent].peerList[0].peerName, readPeerName);
@@ -236,6 +248,12 @@ int main(int argc, char *argv[])
 						// strcpy(contentList[numOfContent].peerList[0].port, readPortName);
 
 						contentList[numOfContent].numOfPeer++;
+
+						printf("ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %s\n",
+							   contentList[numOfContent].contentName,
+							   contentList[numOfContent].peerList[0].peerName,
+							   contentList[numOfContent].peerList[0].address,
+							   contentList[duplicateContentIndex].numOfPeer);
 					}
 					else
 					{
