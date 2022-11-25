@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
 	int alen;																		 /* from-address length		*/
 	int numContentOne = 0, numContentTwo = 0, numContentThree = 0, numOfContent = 0; // how many items are in database
 	int endOfPeerName = 0, endOfContentName = 0, endOfAddress = 0;
+	int deleteContentIndex = 0, deletePeerIndex = 0;
 	struct sockaddr_in sin; /* an Internet endpoint address         */
 	int s, type;			/* socket descriptor and socket type    */
 	int port = 3000;
@@ -89,13 +90,13 @@ int main(int argc, char *argv[])
 	for (i = 0; i < 5; i++)
 	{
 		strcpy(contentList[i].contentName, "");
-		contentList[i].numOfPeer, 0;
+		contentList[i].numOfPeer = 0;
 		for (j = 0; j < 3; j++)
 		{
 			strcpy(contentList[i].peerList[j].peerName, "");
-            strcpy(contentList[i].peerList[j].address, "");
-            strcpy(contentList[i].peerList[j].port, "");
-            contentList[i].peerList[j].lastUsed = 0;
+			strcpy(contentList[i].peerList[j].address, "");
+			strcpy(contentList[i].peerList[j].port, "");
+			contentList[i].peerList[j].lastUsed = 0;
 		}
 	}
 
@@ -117,11 +118,11 @@ int main(int argc, char *argv[])
 			{
 				if (rpdu.data[i] == '$')
 				{
-					endOfPeerName = i-1;
+					endOfPeerName = i - 1;
 				}
 				else if ((rpdu.data[i] == '$') && (endOfPeerName != 0))
 				{
-					endOfContentName = i-1;
+					endOfContentName = i - 1;
 				}
 				else if (rpdu.data[i] == '\0')
 				{
@@ -359,10 +360,9 @@ int main(int argc, char *argv[])
 			// 	}
 			// }
 		case 'T':
-			int deleteContentIndex, deletePeerIndex;
 			strncpy(readPeerName, rpdu.data, 10);
 			strncpy(readContentName, rpdu.data + 10, 10);
-			for (i = 0; i < 5; i++) 
+			for (i = 0; i < 5; i++)
 			{
 				if (strcmp(readContentName, contentList[i].contentName) != 0)
 				{
@@ -430,6 +430,10 @@ int main(int argc, char *argv[])
 
 		case 'E':
 			printf("Error\n");
+			break;
+
+		default:
+			printf("Default\n");
 			break;
 		}
 	}
