@@ -89,13 +89,13 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < 5; i++)
 	{
-		strcpy(contentList[i].contentName, "");
+		strcpy(contentList[i].contentName, ' ');
 		contentList[i].numOfPeer = 0;
 		for (j = 0; j < 3; j++)
 		{
-			strcpy(contentList[i].peerList[j].peerName, "");
-			strcpy(contentList[i].peerList[j].address, "");
-			strcpy(contentList[i].peerList[j].port, "");
+			strcpy(contentList[i].peerList[j].peerName, ' ');
+			strcpy(contentList[i].peerList[j].address, ' ');
+			strcpy(contentList[i].peerList[j].port, ' ');
 			contentList[i].peerList[j].lastUsed = 0;
 		}
 	}
