@@ -41,12 +41,13 @@ int main(int argc, char *argv[])
 	char rbuf[100], sbuf[100]; /* "input" buffer; any size > 0	*/
 	char *pts;
 	char readPeerName[10], readContentName[10], readAddress[80];
-	int sock;																	/* server socket		*/
-	time_t now;																	/* current time			*/
-	int alen;																	/* from-address length		*/
+	int sock;																		 /* server socket		*/
+	time_t now;																		 /* current time			*/
+	int alen;																		 /* from-address length		*/
 	int numContentOne = 0, numContentTwo = 0, numContentThree = 0, numOfContent = 0; // how many items are in database
-	struct sockaddr_in sin;														/* an Internet endpoint address         */
-	int s, type;																/* socket descriptor and socket type    */
+	int endOfPeerName = 0, endOfContentName = 0, endOfAddress = 0;
+	struct sockaddr_in sin; /* an Internet endpoint address         */
+	int s, type;			/* socket descriptor and socket type    */
 	int port = 3000;
 	int i, j, bytesRead, duplicateContent, duplicatePeer, duplicatePeerIndex, duplicateContentIndex;
 	struct pdu spdu, rpdu;
@@ -85,6 +86,19 @@ int main(int argc, char *argv[])
 	listen(s, 5);
 	alen = sizeof(fsin);
 
+	for (i = 0; i < 5; i++)
+	{
+		strcpy(contentList[i].contentName, "");
+		contentList[i].numOfPeer, 0;
+		for (j = 0; j < 3; j++)
+		{
+			strcpy(contentList[i].peerList[j].peerName, "");
+            strcpy(contentList[i].peerList[j].address, "");
+            strcpy(contentList[i].peerList[j].port, "");
+            contentList[i].peerList[j].lastUsed = 0;
+		}
+	}
+
 	while (1)
 	{
 
@@ -95,10 +109,28 @@ int main(int argc, char *argv[])
 		switch (rpdu.type)
 		{
 		case 'R':
+			endOfPeerName = 0;
+			endOfContentName = 0;
+			endOfAddress = 0;
 			// need dashes or some limiter to determine when end of name is
-			strncpy(readPeerName, rpdu.data, 10);
-			strncpy(readContentName, rpdu.data + 10, 10);
-			strncpy(readAddress, rpdu.data + 20, 80);
+			for (i = 0; i < 100; i++)
+			{
+				if (rpdu.data[i] == '$')
+				{
+					endOfPeerName = i-1;
+				}
+				else if ((rpdu.data[i] == '$') && (endOfPeerName != 0))
+				{
+					endOfContentName = i-1;
+				}
+				else if (rpdu.data[i] == '\0')
+				{
+					endOfAddress = i;
+				}
+			}
+			strncpy(readPeerName, rpdu.data, endOfPeerName);
+			strncpy(readContentName, rpdu.data + endOfPeerName, endOfContentName);
+			strncpy(readAddress, rpdu.data + endOfContentName, endOfAddress);
 
 			// put for loop into a function to call
 			// if (checkInDatabase(readPeerName, readContentName, database))
@@ -200,7 +232,7 @@ int main(int argc, char *argv[])
 						strcpy(contentList[numOfContent].contentName, readContentName);
 						strcpy(contentList[numOfContent].peerList[0].peerName, readPeerName);
 						strcpy(contentList[numOfContent].peerList[0].address, readAddress);
-						//strcpy(contentList[numOfContent].peerList[0].port, readPortName);
+						// strcpy(contentList[numOfContent].peerList[0].port, readPortName);
 
 						contentList[numOfContent].numOfPeer++;
 					}
@@ -348,7 +380,7 @@ int main(int argc, char *argv[])
 
 			for (i = deletePeerIndex; i < 3; i++)
 			{
-				contentList[deleteContentIndex].peerList[i] = contentList[deleteContentIndex].peerList[i+1];
+				contentList[deleteContentIndex].peerList[i] = contentList[deleteContentIndex].peerList[i + 1];
 			}
 			contentList[deleteContentIndex].numOfPeer -= 1;
 			break;
