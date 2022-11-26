@@ -228,142 +228,140 @@ int main(int argc, char **argv)
 					}
 					else
 					{
-						fprintf(stderr,"List of registered content:\n%s", rpdu.data);
+						fprintf(stderr, "List of registered content:\n%s", rpdu.data);
 					}
 				}
 				break;
 
-			// case 'S':
-			// 	printf("Tell me the content.\n");
-			// 	scanf("%s", contentname);
-			// 	strcat(spdu.data,peername);
-			// 	strcat(spdu.data,"-");
-			// 	strcat(spdu.data,contentname);
-			// 	strcat(spdu.data,"-");
-			// 	printf("%c %s is sent to index server.\n",spdu.type,spdu.data);
-			// 	char listenBufS[101];
-			// 	bzero(listenBufS,sizeof(listenBufS));
-			// 	(void) write(s, &spdu, strlen(spdu.data)+1);
-			// 	if (recvfrom(s, listenBufS, sizeof(listenBufS), 0, (struct sockaddr *)&sin, &alen) < 0)
-			// 			fprintf(stderr, "recvfrom error\n");
-			// 	//rpdu.type = listenBufS[0];
-			// 	//printf("%c was found.\n",listenBufS[0]);
-			// 	listenBufS[101]='\0';
-			// 	printf("%s buf.\n",listenBufS);
-			// 	switch(listenBufS[0]){
-			// 		case 'S':
-			// 			printf("Case S.\n");
-			// 			bzero(spdu.data,sizeof(spdu.data));
-			// 			char PeerS[100];
-			// 			char AddressS[100];
-			// 			char PortS[100];
-			// 			int track1S = 0;
-			// 			int track2S = 0;
-			// 			int peerlenS = 0;
-			// 			int adrlenS = 0;
-			// 			int portlenS = 0;
-			// 			for(i=0;i<100;i++){
-			// 	    			PeerS[i]='\0';
-			// 	    		}
-			// 	    		for(i=0;i<100;i++){
-			// 	    			AddressS[i]='\0';
-			// 	    		}
-			// 	    		for(i=0;i<100;i++){
-			//     				PortS[i]='\0';
-			// 	    		}
-			// 			for(i=0;i<101;i++){
-			// 	    			if(track1S==0){
-			// 	    				PeerS[peerlenS]=listenBufS[i+1];
-			// 	    				if(PeerS[peerlenS]=='-'){
-			// 	    					PeerS[peerlenS]='\0';
-			// 	    					track1S=1;
+			case 'S':
+				bzero(rpdu.data, sizeof(rpdu.data));
+				printf("Tell me the content.\n");
+				scanf("%s", contentname);
+				strcat(spdu.data, peername);
+				strcat(spdu.data, "$");
+				strcat(spdu.data, contentname);
+				strcat(spdu.data, "$");
+				printf("%c %s is sent to index server.\n", spdu.type, spdu.data);
+				// char listenBufS[101];
+				// bzero(listenBufS, sizeof(listenBufS));
+				(void)write(s, &spdu, strlen(spdu.data) + 1);
+				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+					fprintf(stderr, "recvfrom error\n");
+				// rpdu.type = listenBufS[0];
+				// printf("%c was found.\n",listenBufS[0]);
+				// listenBufS[101] = '\0';
+				printf("Receive from server type: %c data %s buf.\n", rpdu.type, rpdu.data);
+				switch (rpdu.type)
+				{
+				case 'S':
+					printf("Case S.\n");
+					bzero(spdu.data, sizeof(spdu.data));
+					char readPeerName[10];
+					char readAddr[80];
+					char readPort[10];
+					int track1S = 0;
+					int track2S = 0;
+					int peerlenS = 0;
+					int adrlenS = 0;
+					int portlenS = 0;
+					// need dashes or some limiter to determine when end of name is
+					i = 0;
+					fprintf(stderr, "Before readPeerName while \n");
+					while (rpdu.data[i] != '$')
+					{
+						readPeerName[i] = rpdu.data[i];
+						i++;
+					}
+					readPeerName[i] = '\0';
+					i++;
+					t = 0;
+					fprintf(stderr, "Before readAddr while \n");
+					while (rpdu.data[i] != '$')
+					{
+						readAddr[t] = rpdu.data[i];
+						i++;
+						t++;
+					}
+					readAddr[t] = '\0';
+					i++;
+					t = 0;
+					fprintf(stderr, "Before readPort while \n");
+					while (rpdu.data[i] != '\0')
+					{
+						readPort[t] = rpdu.data[i];
+						i++;
+						t++;
+					}
+					readPort[t] = '\0';
 
-			// 	    				}
-			// 	    				peerlenS++;
-			// 	    			}
-			// 	    			else if(track2S==0){
-			// 	      				AddressS[adrlenS]=listenBufS[i+1];
-			// 	    				if(AddressS[adrlenS]=='-'){
-			// 	    					AddressS[adrlenS]='\0';
-			// 	    					track2S=1;
-			// 	    				}
-			// 	    				adrlenS++;
-			// 	    			}
-			// 	    			else{
-			// 	    				PortS[portlenS]=listenBufS[i+1];
-			// 	    				if(PortS[portlenS]=='-'){
-			// 	    					PortS[portlenS]='\0';
-			// 	    					break;
-			// 	    				}
-			// 	    				portlenS++;
-			// 	    			}
-			// 				}
-			// 				printf("Received %s %s %s to now try to download file.\n", PeerS, AddressS, PortS);
+					printf("Received %s %s %s to now try to download file.\n", readPeerName, readAddr, readPort);
 
-			// 			strcpy(spdu.data,PeerS);
-			// 			strcat(spdu.data,"-");
-			// 			strcat(spdu.data, contentname);
-			// 			strcat(spdu.data,"-");
-			// 			if (!(strcmp(PeerS, peername))){
-			// 				printf("You already have this file!\n");
-			// 				break;
-			// 			}
-			// 			int portSint = atoi(PortS);
-			// 			strcpy(childr[threadNum].content, contentname);
-			// 			childr[threadNum].port = portNumTCP[0];
-			// 			childr[threadNum].pid = fork();
-			// 			switch (childr[threadNum].pid){
-			// 	 			case 0:		/* child */
-			// 					TCPrec(portSint,contentname,spdu,AddressS);
-			// 					printf("Downloaded file done. I am now going to be a host.\n");
-			// 					sleep(1);
-			// 					// make myself a host
-			// 					bzero(spdu.data,sizeof(spdu.data));
-			// 					spdu.type='R';
-			// 					srand((unsigned)time(&t));
-			// 					int randum = (rand() % 40000)+10000;
-			// 					fprintf(stderr,"Register content at port %d.\n", randum);
-			// 					strcat(spdu.data,peername);
-			// 					strcat(spdu.data,"-");
-			// 					strcat(spdu.data,contentname);
-			// 					strcat(spdu.data,"-");
-			// 					sprintf(intString, "%d", randum);
-			// 					strcat(spdu.data,intString);
-			// 					strcat(spdu.data,"-");
-			// 					fprintf(stderr,"Sending registration PDU %c %s.\n",spdu.type,spdu.data);
-			// 					(void) write(s, &spdu, strlen(spdu.data)+1);
-			// 					// get the ACK or error
-			// 					bzero(listenBufS,sizeof(listenBufS));
-			// 					if (recvfrom(s, listenBufS, sizeof(listenBufS), 0, (struct sockaddr *)&sin, &alen) < 0)
-			// 						fprintf(stderr, "recvfrom error\n");
-			// 					else {
-			// 						fprintf(stderr, "Received Ack or Error %s.\n",listenBufS);
-			// 						if(listenBufS[0]!='A'){
-			// 							printf("Not making TCP.\n");
-			// 							break;
-			// 						}
-			// 					}
-			// 					fprintf(stderr, "Making a socket to register downloaded content\n");
-			// 					TCP(randum,contentname);
-			// 					break;
-			// 	  			default:
-			// 	  				printf("PID port and content of child: %d %d %s\n", childr[threadNum].pid, childr[threadNum].port, childr[threadNum].content);			/* parent */
-			// 	  				printf("Continuing operation.\n");
-			// 	  				threadNum++;
-			// 	  				printf("There are now %d TCP ports open.\n",threadNum);
-			// 					continue;
-			// 	  			case -1:
-			// 					fprintf(stderr, "fork: error\n");
-			// 					break;
-			// 				break;
-			// 			}
-			// 		printf("Finalizing operation.\n");
-			// 		break;
-			// 	default:
-			// 		printf("Error in syntax command\n");
-			// 		break;
-			// 	}
-			// 	break;
+					strcpy(spdu.data, readPeerName);
+					strcat(spdu.data, "$");
+					strcat(spdu.data, contentname);
+					if (!(strcmp(readPeerName, peername)))
+					{
+						printf("You already have this file!\n");
+						break;
+					}
+					int portSint = atoi(readPort);
+					strcpy(childr[threadNum].content, contentname);
+					childr[threadNum].port = portNumTCP;
+					childr[threadNum].pid = fork();
+					switch (childr[threadNum].pid)
+					{
+					case 0: /* child */
+						TCPrec(portSint, contentname, spdu, readAddr);
+						printf("Downloaded file done. I am now going to be a host.\n");
+						sleep(1);
+						// make myself a host
+						bzero(spdu.data, sizeof(spdu.data));
+						spdu.type = 'R';
+						srand((unsigned)time(&t));
+						int randum = (rand() % 40000) + 10000;
+						fprintf(stderr, "Register content at port %d.\n", randum);
+						strcat(spdu.data, peername);
+						strcat(spdu.data, "$");
+						strcat(spdu.data, contentname);
+						strcat(spdu.data, "$");
+						sprintf(intString, "%d", randum);
+						strcat(spdu.data, intString);
+						fprintf(stderr, "Sending registration PDU %c %s.\n", spdu.type, spdu.data);
+						(void)write(s, &spdu, strlen(spdu.data) + 1);
+						// get the ACK or error
+						bzero(&rpdu, sizeof(rpdu));
+						if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+							fprintf(stderr, "recvfrom error\n");
+						else
+						{
+							fprintf(stderr, "Received Ack or Error: %c.\n", rpdu.type);
+							if (rpdu.type != 'A')
+							{
+								printf("Not making TCP.\n");
+								break;
+							}
+						}
+						fprintf(stderr, "Making a socket to register downloaded content\n");
+						TCP(randum, contentname);
+						break;
+					default:
+						printf("PID port and content of child: %d %d %s\n", childr[threadNum].pid, childr[threadNum].port, childr[threadNum].content); /* parent */
+						printf("Continuing operation.\n");
+						threadNum++;
+						printf("There are now %d TCP ports open.\n", threadNum);
+						continue;
+					case -1:
+						fprintf(stderr, "fork: error\n");
+						break;
+						break;
+					}
+					printf("Finalizing operation.\n");
+					break;
+				default:
+					printf("Error in syntax command\n");
+					break;
+				}
+				break;
 			// case 'O':
 			// 	printf("Case O\n");
 			// 	printf("Requesting content list.\n");
@@ -389,12 +387,12 @@ int main(int argc, char **argv)
 			// 	spdu.type = 'T';
 			// 	bzero(spdu.data,sizeof(spdu.data));
 			// 	strcpy(spdu.data,peername);
-			// 	strcat(spdu.data,"-");
+			// 	strcat(spdu.data,"$");
 			// 	strcat(spdu.data,contentname);
-			// 	strcat(spdu.data,"-");
+			// 	strcat(spdu.data,"$");
 			// 	//sprintf(intString, "%d", portNumTCP[0]);
 			// 	//strcat(spdu.data,intString);
-			// 	//strcat(spdu.data,"-");
+			// 	//strcat(spdu.data,"$");
 			// 	printf("%c %s should be sent.\n",spdu.type,spdu.data);
 			// 	(void) write(s, &spdu, strlen(spdu.data)+1);
 			// 	// get the ACK or error
@@ -429,9 +427,9 @@ int main(int argc, char **argv)
 			// 			spdu.type = 'T';
 			// 			bzero(spdu.data,sizeof(spdu.data));
 			// 			strcpy(spdu.data,peername);
-			// 			strcat(spdu.data,"-");
+			// 			strcat(spdu.data,"$");
 			// 			strcat(spdu.data,childr[k].content);
-			// 			strcat(spdu.data,"-");
+			// 			strcat(spdu.data,"$");
 			// 			printf("%c %s should be sent.\n",spdu.type,spdu.data);
 			// 			(void) write(s, &spdu, strlen(spdu.data)+1);
 			// 			// get the ACK or error
