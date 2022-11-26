@@ -40,10 +40,11 @@ int fSize(FILE * fp){
  * main - UDP client for TIME service that prints the resulting time
  *------------------------------------------------------------------------
  */
-typedef struct pdu {
+typedef struct 
+{
 	char type;
 	char data[100];
-}PDU;
+}pdu;
 
 typedef struct {
 	int port;
@@ -56,8 +57,8 @@ Content childr[MAXCONTENT];
  int echod(int sd, char * contentname);
  void	reaper(int sig);
  int TCP();
- int echodrec(int sd, char * contentname, PDU spdu);
- int TCPrec(int portTCP, char * contentname, PDU spdu, char * AddressS);
+ int echodrec(int sd, char * contentname, pdu spdu);
+ int TCPrec(int portTCP, char * contentname, pdu spdu, char * AddressS);
  void closePID(char * contentname);
  
 	
@@ -81,7 +82,6 @@ main(int argc, char **argv)
 			printf("Please enter a shorter name (10 Characters)\n");
 			scanf("%s", peername);
 		}
-		
 		switch (argc) {
 		case 1:
 			break;
@@ -128,8 +128,8 @@ main(int argc, char **argv)
 		int portNumTCP;
 		char 	intString[20];
 		int debug = 0;
-		struct pdu rpdu;
-		struct pdu spdu;
+		pdu rpdu;
+		pdu spdu;
 		while(1){
 			//Initialize the send pdu data
 			bzero(spdu.data,sizeof(spdu.data));
@@ -156,16 +156,16 @@ main(int argc, char **argv)
 					sprintf(intString, "%d", portNumTCP);
 					strcat(spdu.data,intString);
 					strcat(spdu.data,"\0");
-					printf("%c %s should be sent.\n",spdu.type,spdu.data);
-					(void) write(s, &spdu, strlen(spdu.data)+1);
+					printf("%c %s %d should be sent.\n",spdu.type,spdu.data, sizeof(spdu));
+					(void) write(s, &spdu, sizeof(spdu));
 					// get the ACK or error
 					char listenBufR[101];
-					bzero(listenBufR,sizeof(listenBufR));
-						if (recvfrom(s, listenBufR, sizeof(listenBufR), 0, (struct sockaddr *)&sin, &alen) < 0)
+					bzero(rpdu.data,sizeof(rpdu.data));
+						if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
 							fprintf(stderr, "recvfrom error\n");
 						else {
-							fprintf(stderr, "Received Ack or Error %s.\n",listenBufR);
-							if(listenBufR[0]!='A'){
+							fprintf(stderr, "Received Ack or Error  %s.\n",rpdu.type);
+							if(rpdu.type!='A'){
 								//Received error
 								printf("Not starting TCP.\n");
 								printf("Peername already in use for this content enter new peername\n");
@@ -498,7 +498,7 @@ void closePID(char * contentname){
 	printf("Finished closing PID\n");
 }
 
-int TCPrec(int portTCP, char * contentname, PDU spdu, char * AddressS){
+int TCPrec(int portTCP, char * contentname, pdu spdu, char * AddressS){
 	fprintf(stderr,"Attempting to download %s.\n",contentname);
 	fprintf(stderr,"Trying to connect to %s.\n",AddressS);
 
@@ -600,7 +600,7 @@ int echod(int sd, char * contentname){
 	return(0);
 }
 
-int echodrec(int sd, char * contentname, PDU spdu){
+int echodrec(int sd, char * contentname, pdu spdu){
 	fprintf(stderr,"Attempting to download file.\n");
 	FILE *fptr;
 	char 	intString[20];
