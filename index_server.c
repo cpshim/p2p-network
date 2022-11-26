@@ -2,58 +2,67 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <strings.h>
+#include <math.h>
+#include <arpa/inet.h>
+#define MAX_NUM_OF_PEER 3
+#define MAX_NUM_OF_CONTENT 5
 
+void printStructs();
+
+typedef struct
+{
+	char peerName[10];
+	char port[10];
+	char address[80];
+	int lastUsed;
+} Peer;
+typedef struct
+{
+	Peer peerList[MAX_NUM_OF_PEER];
+	char contentName[10];
+	int numOfPeer;
+} Content;
+
+Content contentList[MAX_NUM_OF_CONTENT];
+struct pdu
+{
+	char type;
+	char data[100];
+};
 /*------------------------------------------------------------------------
- * main - Iterative UDP server for TIME service
+ * main - Iterative Index Server
  *------------------------------------------------------------------------
  */
 int main(int argc, char *argv[])
 {
 	struct sockaddr_in fsin; /* the from address of a client	*/
-	typedef struct
-	{
-		char peerName[10];
-		char port[10];
-		char address[80];
-		int lastUsed;
-	} peer;
-	typedef struct
-	{
-		peer peerList[3];
-		char contentName[10];
-		int numOfPeer;
-	} content;
-	content contentList[5];
-	struct pdu
-	{
-		char type;
-		char data[100];
-	};
-	char rbuf[100], sbuf[100]; /* "input" buffer; any size > 0	*/
+
+	char rbuf[101], sbuf[101]; /* "input" buffer; any size > 0	*/
 	char *pts;
-	char readPeerName[10], readContentName[10], readAddress[80];
-	int sock;																		 /* server socket		*/
-	time_t now;																		 /* current time			*/
+	char readPeerName[10], readContentName[10], readPort[10], readAddress[70];
+	int sock; /* server socket		*/
+	// time_t now;																		 /* current time			*/
 	int alen;																		 /* from-address length		*/
 	int numContentOne = 0, numContentTwo = 0, numContentThree = 0, numOfContent = 0; // how many items are in database
-	int endOfPeerName = 0, endOfContentName = 0, endOfAddress = 0;
+	int endOfPeerName = 0, endOfContentName = 0, endOfPort = 0;
 	int deleteContentIndex = 0, deletePeerIndex = 0;
 	struct sockaddr_in sin; /* an Internet endpoint address         */
 	int s, type;			/* socket descriptor and socket type    */
 	int port = 3000;
-	int i, j, bytesRead, duplicateContent, duplicatePeer, duplicatePeerIndex, duplicateContentIndex;
+	int i, j, t, bytesRead, duplicateContent, duplicatePeer, duplicatePeerIndex, duplicateContentIndex;
 	struct pdu spdu, rpdu;
 	// struct content a, b, c, d, e, f, g;
-	struct stat fileStats;
+	// struct stat fileStats;
 	// struct content database[7];
 	//  char database[10][100][2];  //database only able to hold 10 unique users and 100 unique content name and 1 address; might need to make dynamic array
 	int fileSize;
@@ -87,65 +96,108 @@ int main(int argc, char *argv[])
 	listen(s, 5);
 	alen = sizeof(fsin);
 
-	for (i = 0; i < 5; i++)
+	fprintf(stderr, "Before Init");
+	//---------------initialize database-----------------------
+	for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 	{
-		strcpy(contentList[i].contentName, ' ');
+		strcpy(contentList[i].contentName, "");
 		contentList[i].numOfPeer = 0;
-		for (j = 0; j < 3; j++)
+		fprintf(stderr, "Init Content");
+		for (j = 0; j < MAX_NUM_OF_PEER; j++)
 		{
-			strcpy(contentList[i].peerList[j].peerName, ' ');
-			strcpy(contentList[i].peerList[j].address, ' ');
-			strcpy(contentList[i].peerList[j].port, ' ');
+			fprintf(stderr, "Init Peer");
+			strcpy(contentList[i].peerList[j].peerName, "");
+			strcpy(contentList[i].peerList[j].address, "");
+			strcpy(contentList[i].peerList[j].port, "");
 			contentList[i].peerList[j].lastUsed = 0;
 		}
 	}
-
+	printStructs();
 	while (1)
 	{
 
-		if (recvfrom(s, &rpdu, sizeof(rpdu), 0,
-					 (struct sockaddr *)&fsin, &alen) < 0)
+		fprintf(stderr, "bzero rbuf\n");
+		bzero(rbuf, sizeof(rbuf));
+		fprintf(stderr, "bzero rpdu.data\n");
+		bzero(rpdu.data, sizeof(rpdu.data));
+		// fprintf(stderr, "bzero rpdu.type\n");
+		// bzero(rpdu.type, sizeof(rpdu.type));
+		fprintf(stderr, "bzero spdu.data\n");
+		bzero(spdu.data, sizeof(spdu.data));
+		// fprintf(stderr, "bzero spdu.type\n");
+		// bzero(spdu.type, sizeof(spdu.type));
+
+		//fprintf(stderr, "before receive\n");
+		//fprintf(stderr, "size of rpdu: %d\n", sizeof(rpdu));
+		if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&fsin, &alen) < 0)
 			fprintf(stderr, "recvfrom error\n");
+
+		fprintf(stderr, "Recieve type %c\n", rpdu.type);
+		fprintf(stderr, "Recieve data %s\n", rpdu.data);
 
 		switch (rpdu.type)
 		{
 		case 'R':
+			bzero(spdu.data, sizeof(spdu.data));
+			fprintf(stderr, "Case R \n");
 			endOfPeerName = 0;
 			endOfContentName = 0;
-			endOfAddress = 0;
+			endOfPort = 0;
 			// need dashes or some limiter to determine when end of name is
-			for (i = 0; i < 100; i++)
+			i = 0;
+			fprintf(stderr, "Before readPeerName while \n");
+			while (rpdu.data[i] != '$')
 			{
-				if (rpdu.data[i] == '$')
-				{
-					endOfPeerName = i - 1;
-				}
-				else if ((rpdu.data[i] == '$') && (endOfPeerName != 0))
-				{
-					endOfContentName = i - 1;
-				}
-				else if (rpdu.data[i] == '\0')
-				{
-					endOfAddress = i;
-				}
+				readPeerName[i] = rpdu.data[i];
+				i++;
 			}
-			strncpy(readPeerName, rpdu.data, endOfPeerName);
-			strncpy(readContentName, rpdu.data + endOfPeerName, endOfContentName);
-			strncpy(readAddress, rpdu.data + endOfContentName, endOfAddress);
+			readPeerName[i] = '\0';
+			i++;
+			t = 0;
+			fprintf(stderr, "Before readContentName while \n");
+			while (rpdu.data[i] != '$')
+			{
+				readContentName[t] = rpdu.data[i];
+				i++;
+				t++;
+			}
+			readContentName[t] = '\0';
+			i++;
+			t = 0;
+			fprintf(stderr, "Before readPort while \n");
+			while (rpdu.data[i] != '\0')
+			{
+				readPort[t] = rpdu.data[i];
+				i++;
+				t++;
+			}
+			fprintf(stderr, "After readPort while \n");
+			readPort[t] = '\0';
+
+			fprintf(stderr, "readPort: %s\n", readPort);
+			fprintf(stderr, "readContentName: %s\n", readContentName);
+			fprintf(stderr, "readPeerName: %s\n", readPeerName);
+			char *readAddr = inet_ntoa(fsin.sin_addr);
 
 			// put for loop into a function to call
 			// if (checkInDatabase(readPeerName, readContentName, database))
+
 			duplicatePeer = 0;
 			duplicateContent = 0;
-			for (i = 0; i < 5; i++)
-			{
-				if (strcmp(readContentName, contentList[i].contentName) != 0)
+			//printStructs();
+			
+
+			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
+			{	
+				//fprintf(stderr, "Check duplicate");
+				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
+					fprintf(stderr, "Is duplicate\n");
 					duplicateContentIndex = i;
 					duplicateContent = 1;
-					for (j = 0; j < 5; j++)
+					for (j = 0; j < MAX_NUM_OF_PEER; j++)
 					{
-						if (strcmp(readPeerName, contentList[i].peerList[j].peerName) != 0)
+						if (strcmp(readPeerName, contentList[i].peerList[j].peerName) == 0)
 						{
 							duplicatePeer = 1;
 						}
@@ -168,7 +220,7 @@ int main(int argc, char *argv[])
 			{
 				spdu.type = 'E';
 				strcpy(spdu.data, "Error: This peer already registered this content");
-				printf("%s\n", spdu.data);
+				fprintf(stderr, "%s\n", spdu.data);
 				sendto(s, &spdu, sizeof(spdu), 0,
 					   (struct sockaddr *)&fsin, sizeof(fsin));
 			}
@@ -176,269 +228,280 @@ int main(int argc, char *argv[])
 			{
 				if (duplicateContent)
 				{
-					if (contentList[i].numOfPeer < 3)
+					if (contentList[duplicateContentIndex].numOfPeer < MAX_NUM_OF_PEER)
 					{
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].peerName, readPeerName);
-						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].address, readAddress);
-
+						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].port, readPort);
+						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].address, readAddr);
+						contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].lastUsed = 1;
 						contentList[duplicateContentIndex].numOfPeer++;
+
+						spdu.type = 'A';
+						strcpy(spdu.data, "Register Success\0");
+						sendto(s, &spdu, sizeof(spdu), 0,
+							   (struct sockaddr *)&fsin, sizeof(fsin));
+						// fprintf(stderr, "ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %s\n",
+						// 		contentList[duplicateContentIndex].contentName,
+						// 		contentList[duplicateContentIndex].peerList[0].peerName,
+						// 		contentList[duplicateContentIndex].peerList[0].address,
+						// 		contentList[duplicateContentIndex].numOfPeer);
 					}
 					else
 					{
 						spdu.type = 'E';
 						strcpy(spdu.data, "Error: No more space left in database");
-						printf("%s\n", spdu.data);
+						fprintf(stderr, "%s\n", spdu.data);
 						sendto(s, &spdu, sizeof(spdu), 0,
 							   (struct sockaddr *)&fsin, sizeof(fsin));
+						break;
 					}
-
-					// for (i = 0; i < 3; i++)
-					// {
-					// 	if (strcmp(readPeerName, peerList[i].peerName) != 0)
-					// 	{
-					// 		if (peerList[i].database[peerList[i].numOfContent].contentName < 5)
-					// 		{
-					// 			strcpy(peerList[i].database[peerList[i].numOfContent].contentName, readContentName);
-					// 			strcpy(peerList[i].database[peerList[i].numOfContent].address, readAddress);
-
-					// 			peerList[i].numOfContent++;
-					// 		}
-					// switch(i)
-					// {
-					// 	case 0:
-					// 		if (peerList[i].database[peerList[i].numOfContent].contentName < 5)
-					// 		{
-
-					// 		}
-					// 		strcpy(peerList[i].database[numContentOne].contentName, readContentName);
-					// 		strcpy(peerList[i].database[numContentOne].address, readAddress);
-					// 		numContentOne++;
-					// 		break;
-					// 	case 1:
-					// 		strcpy(peerList[i].database[numContentTwo].contentName, readContentName);
-					// 		strcpy(peerList[i].database[numContentTwo].address, readAddress);
-					// 		numContentTwo++;
-					// 		break;
-					// 	case 2:
-					// 		strcpy(peerList[i].database[numContentThree].contentName, readContentName);
-					// 		strcpy(peerList[i].database[numContentThree].address, readAddress);
-					// 		numContentThree++;
-					// 		break;
-					// }
 				}
 				else
 				{
-					if (numOfContent < 5)
+					if (numOfContent < MAX_NUM_OF_CONTENT)
 					{
-						strcpy(contentList[numOfContent].contentName, readContentName);
-						strcpy(contentList[numOfContent].peerList[0].peerName, readPeerName);
-						strcpy(contentList[numOfContent].peerList[0].address, readAddress);
-						// strcpy(contentList[numOfContent].peerList[0].port, readPortName);
+						fprintf(stderr, "Enter into Database\n");
+						fprintf(stderr, "readPeerName: %s\n", readPeerName);
+						fprintf(stderr, "readContentName: %s\n", readContentName);
+						fprintf(stderr, "readPort: %s\n", readPort);
+						fprintf(stderr, "readAddr: %s\n", readAddr);
 
-						contentList[numOfContent].numOfPeer++;
+						strcpy(contentList[numOfContent].contentName, readContentName);
+						fprintf(stderr, "contentName: %s %s\n", contentList[numOfContent].contentName, readContentName);
+
+						strcpy(contentList[numOfContent].peerList[0].peerName, readPeerName);
+						fprintf(stderr, "peerName: %s %s\n", contentList[numOfContent].peerList[0].peerName, readPeerName);
+
+						strcpy(contentList[numOfContent].peerList[0].port, readPort);
+						fprintf(stderr, "port: %s %s\n", contentList[numOfContent].peerList[0].port, readPort);
+
+						strcpy(contentList[numOfContent].peerList[0].address, readAddr);
+						fprintf(stderr, "Addr: %s\n", contentList[numOfContent].peerList[0].address);
+
+						contentList[numOfContent].numOfPeer = contentList[numOfContent].numOfPeer + 1;
+
+						fprintf(stderr, "numOfPeer: %d\n", contentList[numOfContent].numOfPeer);
+						contentList[numOfContent].peerList[0].lastUsed = 1;
+						fprintf(stderr, "ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %d\n",
+								contentList[numOfContent].contentName,
+								contentList[numOfContent].peerList[0].peerName,
+								contentList[numOfContent].peerList[0].port,
+								contentList[numOfContent].numOfPeer);
+						numOfContent += 1;
+						fprintf(stderr, "numOfContent:%d", numOfContent);
+						spdu.type = 'A';
+						strcpy(spdu.data, "Register Success\0");
+						sendto(s, &spdu, sizeof(spdu), 0,
+							   (struct sockaddr *)&fsin, sizeof(fsin));
 					}
 					else
 					{
 						spdu.type = 'E';
 						strcpy(spdu.data, "Error: No more space left for new peers");
-						printf("%s\n", spdu.data);
+						fprintf(stderr, "%s\n", spdu.data);
 						sendto(s, &spdu, sizeof(spdu), 0,
 							   (struct sockaddr *)&fsin, sizeof(fsin));
 					}
 				}
 			}
+			printStructs();
 			break;
-			// switch (numContent)
-			// { // this will help create new struct content
-			// case 0:
-			// 	strcpy(a.peerName, readPeerName);
-			// 	strcpy(a.contentName, readContentName);
-			// 	strcpy(a.address, readAddress);
-			// 	database[numContent] = a;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 1:
-			// 	strcpy(b.peerName, readPeerName);
-			// 	strcpy(b.contentName, readContentName);
-			// 	strcpy(b.address, readAddress);
-			// 	database[numContent] = b;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 2:
-			// 	strcpy(c.peerName, readPeerName);
-			// 	strcpy(c.contentName, readContentName);
-			// 	strcpy(c.address, readAddress);
-			// 	database[numContent] = c;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 3:
-			// 	strcpy(d.peerName, readPeerName);
-			// 	strcpy(d.contentName, readContentName);
-			// 	strcpy(d.address, readAddress);
-			// 	database[numContent] = d;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 4:
-			// 	strcpy(e.peerName, readPeerName);
-			// 	strcpy(e.contentName, readContentName);
-			// 	strcpy(e.address, readAddress);
-			// 	database[numContent] = e;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 5:
-			// 	strcpy(f.peerName, readPeerName);
-			// 	strcpy(f.contentName, readContentName);
-			// 	strcpy(f.address, readAddress);
-			// 	database[numContent] = f;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// case 6:
-			// 	strcpy(g.peerName, readPeerName);
-			// 	strcpy(g.contentName, readContentName);
-			// 	strcpy(g.address, readAddress);
-			// 	database[numContent] = g;
-			// 	numContent++;
-			// 	spdu.type = 'A';
-			// 	strcpy(spdu.data, "Success");
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// default:
-			// 	spdu.type = 'E';
-			// 	strcpy(spdu.data, "Error: No more space for new content");
-			// 	printf("%s\n", spdu.data);
-			// 	sendto(s, &spdu, sizeof(spdu), 0,
-			// 		   (struct sockaddr *)&fsin, sizeof(fsin));
-			// 	break;
-			// }
-
-			// if ((*numContent < 100) && (*numUsers < 10))
-			// {
-			// 	database[*numUsers][0][0] = readPeerName;
-			// 	database[*numUsers][*numContent][0] = readContentName;
-			// 	database[*numUsers][*numContent][1] = readAddress;
-			// }
-			// database[i] = //add content into database
-
-			// create tcp socket
-			// for (i = 0; i < 10; i++) {
-			// 	if (strcmp(readPeerName, database[i][0][0].peerName) != 0) { //strcmp output 0 if true
-			// 		for (j = 0; j < 100; j++) {
-			// 			if (strcmp(readContentName, database[i][j][0].contentName) != 0) {
-			// 				spdu.type = 'E';
-			// 				strcpy(spdu.data, "Error: Content already registered");
-			// 				printf("%s\n",spdu.data);
-			// 				sendto(s, &spdu, sizeof(spdu), 0,
-			// 					(struct sockaddr *)&fsin, sizeof(fsin));
-			// 				break;
-			// 			}
-			// 		}
-			// 	}
-			// }
 		case 'T':
-			strncpy(readPeerName, rpdu.data, 10);
-			strncpy(readContentName, rpdu.data + 10, 10);
-			for (i = 0; i < 5; i++)
+			i = 0;
+			int searchDelete = 0;
+			bzero(spdu.data, sizeof(spdu.data));
+			strcpy(spdu.data, "\0");
+			bzero(readPeerName, sizeof(readPeerName));
+			bzero(readContentName, sizeof(readContentName));
+			// Read peername and contentname
+			fprintf(stderr, "Before readPeerName while \n");
+			while (rpdu.data[i] != '$')
 			{
-				if (strcmp(readContentName, contentList[i].contentName) != 0)
+				readPeerName[i] = rpdu.data[i];
+				i++;
+			}
+			readPeerName[i] = '\0';
+			fprintf(stderr, "readPeerName: %s\n", readPeerName);
+			i++;
+			t = 0;
+			fprintf(stderr, "Before readContentName while \n");
+			while (rpdu.data[i] != '\0')
+			{
+				readContentName[t] = rpdu.data[i];
+				i++;
+				t++;
+			}
+			// Find indexes of peer and content to be deleted
+			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
+			{
+				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
-					deleteContentIndex = i;
-					for (j = 0; j < 3; j++)
+					fprintf(stderr, "Is duplicate");
+					for (j = 0; j < MAX_NUM_OF_PEER; j++)
 					{
-						if (strcmp(readPeerName, contentList[i].peerList[j].peerName) != 0)
+						if (strcmp(readPeerName, contentList[i].peerList[j].peerName) == 0)
 						{
+							searchDelete = 1;
 							deletePeerIndex = j;
 							break;
 						}
 					}
 				}
 			}
-
-			for (i = deletePeerIndex; i < 3; i++)
+			fprintf(stderr, "deleteContentIndex: %d, deletePeerIndex: %d\n",deleteContentIndex, deletePeerIndex);
+			// If indexes are found: move the next peer into the previous peer until last peer
+			if (searchDelete)
 			{
-				contentList[deleteContentIndex].peerList[i] = contentList[deleteContentIndex].peerList[i + 1];
+				for (i = deletePeerIndex; i < MAX_NUM_OF_PEER - 1; i++)
+				{
+					if (strcmp(contentList[deleteContentIndex].peerList[i+1].peerName, "")!=0){
+						strcpy(contentList[deleteContentIndex].peerList[i].address, contentList[deleteContentIndex].peerList[i + 1].address);
+						strcpy(contentList[deleteContentIndex].peerList[i].peerName, contentList[deleteContentIndex].peerList[i + 1].peerName);
+						strcpy(contentList[deleteContentIndex].peerList[i].port, contentList[deleteContentIndex].peerList[i + 1].port);
+						contentList[deleteContentIndex].peerList[i].lastUsed = contentList[deleteContentIndex].peerList[i + 1].lastUsed;
+					}
+					else{
+						break;
+					}
+				}
+				// de-init the last peer. 
+				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].address, "");
+				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].peerName, "");
+				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].port, "");
+				contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].lastUsed = 0;
+				contentList[deleteContentIndex].numOfPeer -= 1;
+				if (strcmp(contentList[deleteContentIndex].peerList[0].peerName, "")==0){
+					strcpy(contentList[deleteContentIndex].contentName, "");
+				}
+				spdu.type = 'A';
+						strcpy(spdu.data, "Delete Success\0");
+						sendto(s, &spdu, sizeof(spdu), 0,
+							   (struct sockaddr *)&fsin, sizeof(fsin));
 			}
-			contentList[deleteContentIndex].numOfPeer -= 1;
+			printStructs();
 			break;
 
-		case 'C':
-			filePointer = fopen(rpdu.data, "r");
-
-			if (filePointer == NULL)
+			
+		case 'S':
+			i = 0;
+			bzero(spdu.data, sizeof(spdu.data));
+			strcpy(spdu.data, "\0");
+			bzero(readPeerName, sizeof(readPeerName));
+			bzero(readContentName, sizeof(readContentName));
+			int minLastUse = MAX_NUM_OF_PEER;
+			int indexLastUsePeer = 0;
+			int indexLastUseContent = 0;
+			int searchSuccess = 0;
+			fprintf(stderr, "Before readPeerName while \n");
+			while (rpdu.data[i] != '$')
+			{
+				readPeerName[i] = rpdu.data[i];
+				i++;
+			}
+			readPeerName[i] = '\0';
+			fprintf(stderr, "readPeerName: %s\n", readPeerName);
+			i++;
+			t = 0;
+			fprintf(stderr, "Before readContentName while \n");
+			while (rpdu.data[i] != '$')
+			{
+				readContentName[t] = rpdu.data[i];
+				i++;
+				t++;
+			}
+			readContentName[t] = '\0';
+			fprintf(stderr, "readContentName: %s\n", readContentName);
+			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
+			{
+				fprintf(stderr, "Check duplicate");
+				if (strcmp(readContentName, contentList[i].contentName) == 0)
+				{
+					fprintf(stderr, "Is duplicate");
+					for (j = 0; j < MAX_NUM_OF_PEER; j++)
+					{
+						if (contentList[i].peerList[j].lastUsed == 1)
+						{
+							indexLastUsePeer = j;
+							indexLastUseContent = i;
+							searchSuccess = 1;
+							break;
+						}
+					}
+				}
+			}
+			if (searchSuccess == 1)
+			{
+				spdu.type = 'S';
+				strcat(spdu.data, contentList[indexLastUseContent].peerList[indexLastUsePeer].peerName);
+				strcat(spdu.data, "$");
+				strcat(spdu.data, contentList[indexLastUseContent].peerList[indexLastUsePeer].address);
+				strcat(spdu.data, "$");
+				strcat(spdu.data, contentList[indexLastUseContent].peerList[indexLastUsePeer].port);
+				(void)sendto(s, &spdu, sizeof(spdu), 0, (struct sockaddr *)&fsin, sizeof(fsin));
+			}
+			else
 			{
 				spdu.type = 'E';
-				strcpy(spdu.data, "Error opening file");
-				printf("%s\n", spdu.data);
+				strcpy(spdu.data, "Error: No content exists in index for this request");
+				fprintf(stderr, "%s\n", spdu.data);
 				sendto(s, &spdu, sizeof(spdu), 0,
 					   (struct sockaddr *)&fsin, sizeof(fsin));
 			}
 
-			if (filePointer != NULL)
+			break;
+		case 'O':
+			fprintf(stderr, "Case O\n");
+			bzero(spdu.data, sizeof(spdu.data));
+			strcpy(spdu.data, "\0");
+			spdu.type = 'O';
+			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
-				lstat(rpdu.data, &fileStats);
-				fileSize = (int)fileStats.st_size;
-
-				for (i = 0; i < fileSize; i += 99)
+				// fprintf(stderr, "Check duplicate");
+				if (strcmp(contentList[i].contentName, "") != 0)
 				{
-					fseek(filePointer, i, SEEK_SET);
-					bytesRead = fread(rbuf, sizeof(rbuf) - 1, 1, filePointer);
-
-					strcpy(spdu.data, rbuf);
-
-					if (feof(filePointer))
-					{
-						spdu.type = 'F';
-					}
-					else
-					{
-						spdu.type = 'D';
-					}
-
-					sendto(s, &spdu, sizeof(spdu), 0,
-						   (struct sockaddr *)&fsin, sizeof(fsin));
-
-					bzero(spdu.data, 100);
-					bzero(rbuf, 100);
+					fprintf(stderr, "Found Content\n");
+					strcat(spdu.data, contentList[i].contentName);
+					strcat(spdu.data, "\n");
 				}
 			}
-			fclose(filePointer);
+			fprintf(stderr, "Sending: %c %s", spdu.type, spdu.data);
+			sendto(s, &spdu, sizeof(spdu), 0, (struct sockaddr *)&fsin, sizeof(fsin));
 			break;
-
 		case 'E':
-			printf("Error\n");
+			fprintf(stderr, "Error Received from Client: %s\n", rpdu.data);
 			break;
-
 		default:
-			printf("Default\n");
+			fprintf(stderr, "Default\n");
 			break;
 		}
 	}
 }
 
+// print structures debug
+void printStructs()
+{
+
+	printf("\n");
+	printf("Struct Array is\n\n");
+	for (int i = 0; i < MAX_NUM_OF_CONTENT; i++)
+	{
+		printf("Content: %s NumOfPeers: %d\n", contentList[i].contentName, contentList[i].numOfPeer);
+		printf("Peers: \n");
+		for (int j = 0; j < MAX_NUM_OF_PEER; j++)
+		{
+			printf("%s %s %s", contentList[i].peerList[j].peerName, contentList[i].peerList[j].port, contentList[i].peerList[j].address);
+			if ((strcmp(contentList[i].peerList[j].peerName, "")))
+			{
+				printf(" Last Used %d\n", contentList[i].peerList[j].lastUsed);
+			}
+			else
+			{
+				printf("\n");
+			}
+		}
+		printf("\n");
+	}
+}
 // int checkInDatabase(char readPeerName[], char readContentName[], struct content *database[])
 // {
 // 	int i;
