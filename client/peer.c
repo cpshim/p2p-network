@@ -177,8 +177,8 @@ int main(int argc, char **argv)
 					{
 						// Received error
 						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content enter new peername\n");
-						scanf("%s", peername);
+						printf("Peername already in use for this content\n");
+						//scanf("%s", peername);
 						break;
 					}
 					else
@@ -208,7 +208,43 @@ int main(int argc, char **argv)
 					break;
 					break;
 				}
-
+			case 'T':
+				printf("Which file to delete?\n");
+				scanf("%s", contentname);
+				if (strlen(contentname) > 10)
+				{
+					printf("Content name too big\n");
+					break;
+				}
+				// concatenate the name, content, and port with $
+				strcat(spdu.data, peername);
+				strcat(spdu.data, "$");
+				strcat(spdu.data, contentname);
+				strcat(spdu.data, "\0");
+				printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
+				(void)write(s, &spdu, sizeof(spdu));
+				// get the ACK or error
+				// char listenBufR[101];
+				bzero(rpdu.data, sizeof(rpdu.data));
+				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+					fprintf(stderr, "recvfrom error\n");
+				else
+				{
+					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					if (rpdu.type != 'A')
+					{
+						// Received error
+						printf("Not starting TCP.\n");
+						printf("Peername already in use for this content\n");
+						break;
+					}
+					else
+					{
+						printf("Attempting to kill thread");
+						closePID(contentname);
+						printf("Successfully killed thread");
+					}
+				}
 			case 'O':
 				strcat(spdu.data, "\0");
 				(void)write(s, &spdu, sizeof(spdu));
@@ -222,8 +258,7 @@ int main(int argc, char **argv)
 					{
 						// Received error
 						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content enter new peername\n");
-						scanf("%s", peername);
+						printf("Peername already in use for this content\n");
 						break;
 					}
 					else
