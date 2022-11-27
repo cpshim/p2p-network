@@ -189,6 +189,7 @@ int main(int argc, char **argv)
 				}
 				fprintf(stderr, "Data from RDPU data: %s", rpdu.data);
 				strcpy(childr[threadNum].content, contentname);
+				fprintf(stderr, "Content in childr thread %d: %s\n", threadNum, childr[i].content);
 
 				// portNumTCP[0] = htons(0);
 				childr[threadNum].port = portNumTCP;
@@ -404,7 +405,11 @@ int main(int argc, char **argv)
 			case 'Q':
 				for (i = 0; i < MAXCONTENT; i++)
 				{
+					//reset spdu data
+					bzero(spdu.data, sizeof(spdu.data));
 					// if not equal to null
+					fprintf(stderr, "Deleting from childr %d: %s\n", i, childr[i].content);
+					fprintf(stderr, "Content in childr %d: %s\n", i, childr[i].content);
 					if (strcmp(childr[i].content, ""))
 					{
 						spdu.type = 'T';
@@ -429,9 +434,10 @@ int main(int argc, char **argv)
 							}
 							else
 							{
-								printf("Attempting to kill thread");
-								closePID(contentname);
-								printf("Successfully killed thread");
+								printf("Attempting to kill thread\n");
+								closePID(childr[i].content);
+								printf("Successfully killed thread\n");
+								sleep(1);
 							}
 						}
 					}
