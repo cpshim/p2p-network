@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
 		// fprintf(stderr, "bzero spdu.type\n");
 		// bzero(spdu.type, sizeof(spdu.type));
 
-		//fprintf(stderr, "before receive\n");
-		//fprintf(stderr, "size of rpdu: %d\n", sizeof(rpdu));
+		// fprintf(stderr, "before receive\n");
+		// fprintf(stderr, "size of rpdu: %d\n", sizeof(rpdu));
 		if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&fsin, &alen) < 0)
 			fprintf(stderr, "recvfrom error\n");
 
@@ -184,12 +184,11 @@ int main(int argc, char *argv[])
 
 			duplicatePeer = 0;
 			duplicateContent = 0;
-			//printStructs();
-			
+			// printStructs();
 
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
-			{	
-				//fprintf(stderr, "Check duplicate");
+			{
+				// fprintf(stderr, "Check duplicate");
 				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
 					fprintf(stderr, "Is duplicate\n");
@@ -348,40 +347,42 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
-			fprintf(stderr, "deleteContentIndex: %d, deletePeerIndex: %d\n",deleteContentIndex, deletePeerIndex);
+			fprintf(stderr, "deleteContentIndex: %d, deletePeerIndex: %d\n", deleteContentIndex, deletePeerIndex);
 			// If indexes are found: move the next peer into the previous peer until last peer
 			if (searchDelete)
 			{
 				for (i = deletePeerIndex; i < MAX_NUM_OF_PEER - 1; i++)
 				{
-					if (strcmp(contentList[deleteContentIndex].peerList[i+1].peerName, "")!=0){
+					if (strcmp(contentList[deleteContentIndex].peerList[i + 1].peerName, "") != 0)
+					{
 						strcpy(contentList[deleteContentIndex].peerList[i].address, contentList[deleteContentIndex].peerList[i + 1].address);
 						strcpy(contentList[deleteContentIndex].peerList[i].peerName, contentList[deleteContentIndex].peerList[i + 1].peerName);
 						strcpy(contentList[deleteContentIndex].peerList[i].port, contentList[deleteContentIndex].peerList[i + 1].port);
 						contentList[deleteContentIndex].peerList[i].lastUsed = contentList[deleteContentIndex].peerList[i + 1].lastUsed;
 					}
-					else{
+					else
+					{
 						break;
 					}
 				}
-				// de-init the last peer. 
+				// de-init the last peer.
 				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].address, "");
 				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].peerName, "");
 				strcpy(contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].port, "");
 				contentList[deleteContentIndex].peerList[MAX_NUM_OF_PEER - 1].lastUsed = 0;
 				contentList[deleteContentIndex].numOfPeer -= 1;
-				if (strcmp(contentList[deleteContentIndex].peerList[0].peerName, "")==0){
+				if (strcmp(contentList[deleteContentIndex].peerList[0].peerName, "") == 0)
+				{
 					strcpy(contentList[deleteContentIndex].contentName, "");
 				}
 				spdu.type = 'A';
-						strcpy(spdu.data, "Delete Success\0");
-						sendto(s, &spdu, sizeof(spdu), 0,
-							   (struct sockaddr *)&fsin, sizeof(fsin));
+				strcpy(spdu.data, "Delete Success\0");
+				sendto(s, &spdu, sizeof(spdu), 0,
+					   (struct sockaddr *)&fsin, sizeof(fsin));
 			}
 			printStructs();
 			break;
 
-			
 		case 'S':
 			i = 0;
 			bzero(spdu.data, sizeof(spdu.data));

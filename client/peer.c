@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 						// Received error
 						printf("Not starting TCP.\n");
 						printf("Peername already in use for this content\n");
-						//scanf("%s", peername);
+						// scanf("%s", peername);
 						break;
 					}
 					else
@@ -397,6 +397,43 @@ int main(int argc, char **argv)
 					break;
 				}
 				break;
+			case 'Q':
+				for (i = 0; i < MAXCONTENT; i++)
+				{
+					// if not equal to null
+					if (strcmp(childr[i].content, ""))
+					{
+						spdu.type = 'T';
+						strcat(spdu.data, peername);
+						strcat(spdu.data, "$");
+						strcat(spdu.data, childr[i].content);
+						strcat(spdu.data, "\0");
+						printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
+						(void)write(s, &spdu, sizeof(spdu));
+						bzero(rpdu.data, sizeof(rpdu.data));
+						if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+							fprintf(stderr, "recvfrom error\n");
+						else
+						{
+							fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+							if (rpdu.type != 'A')
+							{
+								// Received error
+								printf("Not starting TCP.\n");
+								printf("Peername already in use for this content\n");
+								break;
+							}
+							else
+							{
+								printf("Attempting to kill thread");
+								closePID(contentname);
+								printf("Successfully killed thread");
+							}
+						}
+					}
+				}
+				break;
+
 			// case 'O':
 			// 	printf("Case O\n");
 			// 	printf("Requesting content list.\n");
