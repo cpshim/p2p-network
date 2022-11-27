@@ -172,13 +172,14 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
-					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					fprintf(stderr, "Receive type from server:  %c.\n", rpdu.type);
 					if (rpdu.type != 'A')
 					{
 						// Received error
 						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content enter new peername\n");
-						scanf("%s", peername);
+						fprintf(stderr, "Receive data from server:  %s.\n", rpdu.data);
+						//printf("Peername already in use for this content\n");
+						//scanf("%s", peername);
 						break;
 					}
 					else
@@ -188,6 +189,7 @@ int main(int argc, char **argv)
 				}
 				fprintf(stderr, "Data from RDPU data: %s", rpdu.data);
 				strcpy(childr[threadNum].content, contentname);
+				fprintf(stderr, "Content in childr thread %d: %s\n", threadNum, childr[i].content);
 
 				// portNumTCP[0] = htons(0);
 				childr[threadNum].port = portNumTCP;
@@ -208,7 +210,45 @@ int main(int argc, char **argv)
 					break;
 					break;
 				}
-
+			case 'T':
+				printf("Which file to delete?\n");
+				scanf("%s", contentname);
+				if (strlen(contentname) > 10)
+				{
+					printf("Content name too big\n");
+					break;
+				}
+				// concatenate the name, content, and port with $
+				strcat(spdu.data, peername);
+				strcat(spdu.data, "$");
+				strcat(spdu.data, contentname);
+				strcat(spdu.data, "\0");
+				printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
+				(void)write(s, &spdu, sizeof(spdu));
+				// get the ACK or error
+				// char listenBufR[101];
+				bzero(rpdu.data, sizeof(rpdu.data));
+				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+					fprintf(stderr, "recvfrom error\n");
+				else
+				{
+					fprintf(stderr, "Received Ack or Error in T %c.\n", rpdu.type);
+					if (rpdu.type != 'A')
+					{
+						// Received error
+						//printf("Not starting TCP.\n");
+						//printf("Peername already in use for this content\n");
+						printf("Not able to deregister\n");
+						break;
+					}
+					else
+					{
+						printf("Attempting to kill thread\n");
+						closePID(contentname);
+						printf("Successfully killed thread\n");
+					}
+				}
+				break;
 			case 'O':
 				strcat(spdu.data, "\0");
 				(void)write(s, &spdu, sizeof(spdu));
@@ -217,13 +257,13 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
-					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					fprintf(stderr, "Received Ack or Error in O  %c.\n", rpdu.type);
 					if (rpdu.type != 'O')
 					{
 						// Received error
-						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content enter new peername\n");
-						scanf("%s", peername);
+						//printf("Not starting TCP.\n");
+						//printf("Peername already in use for this content\n");
+						fprintf(stderr, "Error from Server:\n%s", rpdu.data);
 						break;
 					}
 					else
@@ -362,6 +402,48 @@ int main(int argc, char **argv)
 					break;
 				}
 				break;
+			case 'Q':
+				for (i = 0; i < MAXCONTENT; i++)
+				{
+					//reset spdu data
+					bzero(spdu.data, sizeof(spdu.data));
+					// if not equal to null
+					fprintf(stderr, "Deleting from childr %d: %s\n", i, childr[i].content);
+					fprintf(stderr, "Content in childr %d: %s\n", i, childr[i].content);
+					if (strcmp(childr[i].content, ""))
+					{
+						spdu.type = 'T';
+						strcat(spdu.data, peername);
+						strcat(spdu.data, "$");
+						strcat(spdu.data, childr[i].content);
+						strcat(spdu.data, "\0");
+						printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
+						(void)write(s, &spdu, sizeof(spdu));
+						bzero(rpdu.data, sizeof(rpdu.data));
+						if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
+							fprintf(stderr, "recvfrom error\n");
+						else
+						{
+							fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+							if (rpdu.type != 'A')
+							{
+								// Received error
+								printf("Not starting TCP.\n");
+								printf("Peername already in use for this content\n");
+								break;
+							}
+							else
+							{
+								printf("Attempting to kill thread\n");
+								closePID(childr[i].content);
+								printf("Successfully killed thread\n");
+								sleep(1);
+							}
+						}
+					}
+				}
+				break;
+
 			// case 'O':
 			// 	printf("Case O\n");
 			// 	printf("Requesting content list.\n");
