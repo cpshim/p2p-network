@@ -18,7 +18,7 @@
 #define MAX_NUM_OF_CONTENT 5
 
 void printStructs();
-
+void init_lastUsed(int contentNum);
 typedef struct
 {
 	char peerName[10];
@@ -232,6 +232,7 @@ int main(int argc, char *argv[])
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].peerName, readPeerName);
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].port, readPort);
 						strcpy(contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].address, readAddr);
+						init_lastUsed(duplicateContentIndex);
 						contentList[duplicateContentIndex].peerList[contentList[duplicateContentIndex].numOfPeer].lastUsed = 1;
 						contentList[duplicateContentIndex].numOfPeer++;
 
@@ -280,6 +281,7 @@ int main(int argc, char *argv[])
 						contentList[numOfContent].numOfPeer = contentList[numOfContent].numOfPeer + 1;
 
 						fprintf(stderr, "numOfPeer: %d\n", contentList[numOfContent].numOfPeer);
+						init_lastUsed(numOfContent);
 						contentList[numOfContent].peerList[0].lastUsed = 1;
 						fprintf(stderr, "ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %d\n",
 								contentList[numOfContent].contentName,
@@ -438,7 +440,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "readContentName: %s\n", readContentName);
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
-				fprintf(stderr, "Check duplicate");
+				//fprintf(stderr, "Check duplicate");
 				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
 					fprintf(stderr, "Is duplicate");
@@ -454,6 +456,14 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+			
+			if (indexLastUsePeer > 0)
+			{
+				init_lastUsed(indexLastUseContent);
+				contentList[indexLastUseContent].peerList[indexLastUsePeer].lastUsed = 0;
+				contentList[indexLastUseContent].peerList[indexLastUsePeer-1].lastUsed = 1;
+			}
+			//indexLastUsePeer=getUnusedPeer(indexLastUsePeer);
 			if (searchSuccess == 1)
 			{
 				spdu.type = 'S';
@@ -537,6 +547,17 @@ void printStructs()
 		}
 		printf("\n");
 	}
+}
+// init_lastUsed value
+void init_lastUsed(int contentNum)
+{
+	//int k = MAX_NUM_OF_PEER+1;
+	printf("Looking for the next unused Peer.\n");
+	for (int j = 0; j < MAX_NUM_OF_PEER; j++)
+	{
+		contentList[contentNum].peerList[j].lastUsed = 0;
+	}
+	//return k;
 }
 // int checkInDatabase(char readPeerName[], char readContentName[], struct content *database[])
 // {
