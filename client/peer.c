@@ -172,13 +172,14 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
-					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					fprintf(stderr, "Receive type from server:  %c.\n", rpdu.type);
 					if (rpdu.type != 'A')
 					{
 						// Received error
 						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content\n");
-						// scanf("%s", peername);
+						fprintf(stderr, "Receive data from server:  %s.\n", rpdu.data);
+						//printf("Peername already in use for this content\n");
+						//scanf("%s", peername);
 						break;
 					}
 					else
@@ -230,21 +231,23 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
-					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					fprintf(stderr, "Received Ack or Error in T %c.\n", rpdu.type);
 					if (rpdu.type != 'A')
 					{
 						// Received error
-						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content\n");
+						//printf("Not starting TCP.\n");
+						//printf("Peername already in use for this content\n");
+						printf("Not able to deregister\n");
 						break;
 					}
 					else
 					{
-						printf("Attempting to kill thread");
+						printf("Attempting to kill thread\n");
 						closePID(contentname);
-						printf("Successfully killed thread");
+						printf("Successfully killed thread\n");
 					}
 				}
+				break;
 			case 'O':
 				strcat(spdu.data, "\0");
 				(void)write(s, &spdu, sizeof(spdu));
@@ -253,12 +256,13 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
-					fprintf(stderr, "Received Ack or Error  %c.\n", rpdu.type);
+					fprintf(stderr, "Received Ack or Error in O  %c.\n", rpdu.type);
 					if (rpdu.type != 'O')
 					{
 						// Received error
-						printf("Not starting TCP.\n");
-						printf("Peername already in use for this content\n");
+						//printf("Not starting TCP.\n");
+						//printf("Peername already in use for this content\n");
+						fprintf(stderr, "Error from Server:\n%s", rpdu.data);
 						break;
 					}
 					else
