@@ -1,5 +1,3 @@
-/* time_server.c - main */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -50,8 +48,7 @@ int main(int argc, char *argv[])
 	char rbuf[101], sbuf[101]; /* "input" buffer; any size > 0	*/
 	char *pts;
 	char readPeerName[10], readContentName[10], readPort[10], readAddress[70];
-	int sock; /* server socket		*/
-	// time_t now;																		 /* current time			*/
+	int sock;																		 /* server socket		*/
 	int alen;																		 /* from-address length		*/
 	int numContentOne = 0, numContentTwo = 0, numContentThree = 0, numOfContent = 0; // how many items are in database
 	int endOfPeerName = 0, endOfContentName = 0, endOfPort = 0;
@@ -61,10 +58,6 @@ int main(int argc, char *argv[])
 	int port = 3000;
 	int i, j, t, bytesRead, duplicateContent, duplicatePeer, duplicatePeerIndex, duplicateContentIndex;
 	struct pdu spdu, rpdu;
-	// struct content a, b, c, d, e, f, g;
-	// struct stat fileStats;
-	// struct content database[7];
-	//  char database[10][100][2];  //database only able to hold 10 unique users and 100 unique content name and 1 address; might need to make dynamic array
 	int fileSize;
 	FILE *filePointer;
 
@@ -120,15 +113,9 @@ int main(int argc, char *argv[])
 		bzero(rbuf, sizeof(rbuf));
 		fprintf(stderr, "bzero rpdu.data\n");
 		bzero(rpdu.data, sizeof(rpdu.data));
-		// fprintf(stderr, "bzero rpdu.type\n");
-		// bzero(rpdu.type, sizeof(rpdu.type));
 		fprintf(stderr, "bzero spdu.data\n");
 		bzero(spdu.data, sizeof(spdu.data));
-		// fprintf(stderr, "bzero spdu.type\n");
-		// bzero(spdu.type, sizeof(spdu.type));
 
-		// fprintf(stderr, "before receive\n");
-		// fprintf(stderr, "size of rpdu: %d\n", sizeof(rpdu));
 		if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&fsin, &alen) < 0)
 			fprintf(stderr, "recvfrom error\n");
 
@@ -143,7 +130,6 @@ int main(int argc, char *argv[])
 			endOfPeerName = 0;
 			endOfContentName = 0;
 			endOfPort = 0;
-			// need dashes or some limiter to determine when end of name is
 			i = 0;
 			fprintf(stderr, "Before readPeerName while \n");
 			while (rpdu.data[i] != '$')
@@ -179,16 +165,11 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "readPeerName: %s\n", readPeerName);
 			char *readAddr = inet_ntoa(fsin.sin_addr);
 
-			// put for loop into a function to call
-			// if (checkInDatabase(readPeerName, readContentName, database))
-
 			duplicatePeer = 0;
 			duplicateContent = 0;
-			// printStructs();
 
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
-				// fprintf(stderr, "Check duplicate");
 				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
 					fprintf(stderr, "Is duplicate\n");
@@ -202,18 +183,6 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-				// if (strcmp(readPeerName, peerList[i].peerName) != 0)
-				// { // strcmp output 0 if true
-				// 	duplicatePeer = 1;
-				// 	duplicatePeerIndex = i;
-				// 	for (j = 0; j < 5; j++)
-				// 	{
-				// 		if (strcmp(readContentName, peerList[i].database[j].contentName) != 0)
-				// 		{
-				// 			duplicateContent = 1;
-				// 		}
-				// 	}
-				// }
 			}
 			if (duplicatePeer)
 			{
@@ -240,11 +209,6 @@ int main(int argc, char *argv[])
 						strcpy(spdu.data, "Register Success\0");
 						sendto(s, &spdu, sizeof(spdu), 0,
 							   (struct sockaddr *)&fsin, sizeof(fsin));
-						// fprintf(stderr, "ContentName:%s, PeerName: %s, Port: %s, Number of Peers: %s\n",
-						// 		contentList[duplicateContentIndex].contentName,
-						// 		contentList[duplicateContentIndex].peerList[0].peerName,
-						// 		contentList[duplicateContentIndex].peerList[0].address,
-						// 		contentList[duplicateContentIndex].numOfPeer);
 					}
 					else
 					{
@@ -440,7 +404,6 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "readContentName: %s\n", readContentName);
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
-				// fprintf(stderr, "Check duplicate");
 				if (strcmp(readContentName, contentList[i].contentName) == 0)
 				{
 					fprintf(stderr, "Is duplicate");
@@ -463,7 +426,6 @@ int main(int argc, char *argv[])
 				contentList[indexLastUseContent].peerList[indexLastUsePeer].lastUsed = 0;
 				contentList[indexLastUseContent].peerList[indexLastUsePeer - 1].lastUsed = 1;
 			}
-			// indexLastUsePeer=getUnusedPeer(indexLastUsePeer);
 			if (searchSuccess == 1)
 			{
 				spdu.type = 'S';
@@ -491,7 +453,6 @@ int main(int argc, char *argv[])
 			spdu.type = 'O';
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
-				// fprintf(stderr, "Check duplicate");
 				if (strcmp(contentList[i].contentName, "") != 0)
 				{
 					fprintf(stderr, "Found Content\n");
@@ -551,28 +512,9 @@ void printStructs()
 // init_lastUsed value
 void init_lastUsed(int contentNum)
 {
-	// int k = MAX_NUM_OF_PEER+1;
 	printf("Looking for the next unused Peer.\n");
 	for (int j = 0; j < MAX_NUM_OF_PEER; j++)
 	{
 		contentList[contentNum].peerList[j].lastUsed = 0;
 	}
-	// return k;
 }
-// int checkInDatabase(char readPeerName[], char readContentName[], struct content *database[])
-// {
-// 	int i;
-// 	char peerName[10], contentName[10];
-// 	for (i = 0; i < 7; i++)
-// 	{
-// 		strcpy(peerName, database[i].peerName);
-// 		if (strcmp(readPeerName, peerName) != 0)
-// 		{ // strcmp output 0 if true
-// 			if (strcmp(readContentName, *database[i].contentName) != 0)
-// 			{
-// 				return 1;
-// 			}
-// 		}
-// 	}
-// 	return 0;
-// }

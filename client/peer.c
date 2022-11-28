@@ -1,4 +1,3 @@
-/* time_client.c - main */
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -167,7 +166,6 @@ int main(int argc, char **argv)
 				printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
 				(void)write(s, &spdu, sizeof(spdu));
 				// get the ACK or error
-				// char listenBufR[101];
 				bzero(rpdu.data, sizeof(rpdu.data));
 				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
 					fprintf(stderr, "recvfrom error\n");
@@ -179,8 +177,6 @@ int main(int argc, char **argv)
 						// Received error
 						printf("Not starting TCP.\n");
 						fprintf(stderr, "Receive data from server:  %s.\n", rpdu.data);
-						// printf("Peername already in use for this content\n");
-						// scanf("%s", peername);
 						break;
 					}
 					else
@@ -192,7 +188,6 @@ int main(int argc, char **argv)
 				strcpy(childr[threadNum].content, contentname);
 				fprintf(stderr, "Content in childr thread %d: %s\n", threadNum, childr[i].content);
 
-				// portNumTCP[0] = htons(0);
 				childr[threadNum].port = portNumTCP;
 				childr[threadNum].pid = fork();
 
@@ -227,7 +222,6 @@ int main(int argc, char **argv)
 				printf("%c %s %lu should be sent.\n", spdu.type, spdu.data, sizeof(spdu));
 				(void)write(s, &spdu, sizeof(spdu));
 				// get the ACK or error
-				// char listenBufR[101];
 				bzero(rpdu.data, sizeof(rpdu.data));
 				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
 					fprintf(stderr, "recvfrom error\n");
@@ -237,8 +231,6 @@ int main(int argc, char **argv)
 					if (rpdu.type != 'A')
 					{
 						// Received error
-						// printf("Not starting TCP.\n");
-						// printf("Peername already in use for this content\n");
 						printf("Not able to deregister\n");
 						break;
 					}
@@ -262,8 +254,6 @@ int main(int argc, char **argv)
 					if (rpdu.type != 'O')
 					{
 						// Received error
-						// printf("Not starting TCP.\n");
-						// printf("Peername already in use for this content\n");
 						fprintf(stderr, "Error from Server:\n%s", rpdu.data);
 						break;
 					}
@@ -283,14 +273,10 @@ int main(int argc, char **argv)
 				strcat(spdu.data, contentname);
 				strcat(spdu.data, "$");
 				printf("%c %s is sent to index server.\n", spdu.type, spdu.data);
-				// char listenBufS[101];
-				// bzero(listenBufS, sizeof(listenBufS));
 				(void)write(s, &spdu, strlen(spdu.data) + 1);
 				if (recvfrom(s, &rpdu, sizeof(rpdu), 0, (struct sockaddr *)&sin, &alen) < 0)
 					fprintf(stderr, "recvfrom error\n");
-				// rpdu.type = listenBufS[0];
-				// printf("%c was found.\n",listenBufS[0]);
-				// listenBufS[101] = '\0';
+
 				printf("Receive from server type: %c data %s buf.\n", rpdu.type, rpdu.data);
 				switch (rpdu.type)
 				{
@@ -305,7 +291,7 @@ int main(int argc, char **argv)
 					int peerlenS = 0;
 					int adrlenS = 0;
 					int portlenS = 0;
-					// need dashes or some limiter to determine when end of name is
+
 					i = 0;
 					fprintf(stderr, "Before readPeerName while \n");
 					while (rpdu.data[i] != '$')
@@ -505,7 +491,6 @@ int TCP(int portTCP, char *contentname)
 		case -1:
 			fprintf(stderr, "fork: error\n");
 		}
-		// fprintf(stderr,"Test.\n");
 	}
 }
 
@@ -571,7 +556,6 @@ int TCPrec(int portTCP, char *contentname, pdu spdu, char *AddressS)
 		exit(1);
 	}
 	peerClient(sd, contentname, spdu);
-	// check this shit
 }
 
 /*	reaper		*/
@@ -588,12 +572,7 @@ int peerServer(int sd, char *contentname)
 	int i, n, bytes_to_read, fileSize, numOfPackets, bytesRead, packetNum;
 	FILE *filePointer;
 
-	// read(sd, sbuf, 256);
-
 	printf("We are trying to open %s\n", contentname);
-
-	// filePointer = fopen(sbuf, "r");
-	// sbuf[strcspn(sbuf, "\r\n")] = 0;
 	filePointer = fopen(contentname, "r");
 
 	if (filePointer == NULL)
@@ -604,11 +583,6 @@ int peerServer(int sd, char *contentname)
 
 	if (filePointer != NULL)
 	{
-		// write(sd, error, sizeof(error));
-		// close(sd);
-
-		// printf("WE opened file\n");
-
 		fseek(filePointer, 0L, SEEK_END); // finding the size of file
 
 		fileSize = ftell(filePointer);
@@ -623,18 +597,12 @@ int peerServer(int sd, char *contentname)
 		printf("%d\n", fileSize);
 		printf("%d\n", numOfPackets);
 
-		// rewind(filePointer);
-
 		for (i = 0; i < fileSize; i += PACKET_LEN)
 		{
-			// printf("I am in for loop\n");
-			// printf("%d\n", i);
 			bzero(rbuf, 100);
 			bzero(fbuf, 101);
 			fseek(filePointer, i, SEEK_SET);								// seek 99 bytes every iteration to send data in packets
 			bytesRead = fread(rbuf, sizeof(char), PACKET_LEN, filePointer); // returns same number as elements if successful
-			// printf("I am reading\n");
-			// printf("%s\n", rbuf);
 			fbuf[0] = 'C';
 			fbuf[1] = '\0';
 			strcat(fbuf, rbuf);
@@ -671,10 +639,8 @@ int peerClient(int sd, char *contentname, pdu spdu)
 		}
 		fprintf(stderr, "This is what is being put in file: %s\n", cbuf);
 		fputs(cbuf, filePointer);
-		//}
 		bzero(sbuf, 101);
 		bzero(cbuf, 100);
-		// fclose(filePointer);
 	}
 
 	fprintf(stderr, "file %s downloaded: ", contentname);
