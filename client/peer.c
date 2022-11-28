@@ -631,14 +631,14 @@ int peerServer(int sd, char *contentname)
 			// printf("%d\n", i);
 			bzero(rbuf, 100);
 			bzero(fbuf, 101);
-			fseek(filePointer, i, SEEK_SET);						// seek 99 bytes every iteration to send data in packets
+			fseek(filePointer, i, SEEK_SET);								// seek 99 bytes every iteration to send data in packets
 			bytesRead = fread(rbuf, sizeof(char), PACKET_LEN, filePointer); // returns same number as elements if successful
 			// printf("I am reading\n");
 			// printf("%s\n", rbuf);
 			fbuf[0] = 'C';
 			fbuf[1] = '\0';
 			strcat(fbuf, rbuf);
-			
+
 			fprintf(stderr, "This is being sent: %s\n", fbuf);
 			write(sd, fbuf, 101);
 		}
@@ -664,10 +664,10 @@ int peerClient(int sd, char *contentname, pdu spdu)
 	while (n = read(sd, sbuf, 101))
 	{
 		fprintf(stderr, "This is what was received: %s\n", sbuf);
-		
+
 		for (i = 1; i < 101; i++)
 		{
-			cbuf[i-1] = sbuf[i];
+			cbuf[i - 1] = sbuf[i];
 		}
 		fprintf(stderr, "This is what is being put in file: %s\n", cbuf);
 		fputs(cbuf, filePointer);
@@ -676,7 +676,7 @@ int peerClient(int sd, char *contentname, pdu spdu)
 		bzero(cbuf, 100);
 		// fclose(filePointer);
 	}
-	
+
 	fprintf(stderr, "file %s downloaded: ", contentname);
 	fclose(filePointer);
 
