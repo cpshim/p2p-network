@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
 		switch (rpdu.type)
 		{
 		case 'R':
+			//Case R, Register File
 			bzero(spdu.data, sizeof(spdu.data));
 			fprintf(stderr, "Case R \n");
 			endOfPeerName = 0;
@@ -132,6 +133,7 @@ int main(int argc, char *argv[])
 			endOfPort = 0;
 			i = 0;
 			fprintf(stderr, "Before readPeerName while \n");
+			// Read peername, contentname and port number
 			while (rpdu.data[i] != '$')
 			{
 				readPeerName[i] = rpdu.data[i];
@@ -167,7 +169,8 @@ int main(int argc, char *argv[])
 
 			duplicatePeer = 0;
 			duplicateContent = 0;
-
+			// Check for duplicated peers or content name
+			// If peer is duplicated, that means that the content name is in the database
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
 				if (strcmp(readContentName, contentList[i].contentName) == 0)
@@ -184,6 +187,7 @@ int main(int argc, char *argv[])
 					}
 				}
 			}
+			// Condition for duplicated Registration
 			if (duplicatePeer)
 			{
 				spdu.type = 'E';
@@ -194,6 +198,7 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
+				// Condition if the content is already in the server
 				if (duplicateContent)
 				{
 					if (contentList[duplicateContentIndex].numOfPeer < MAX_NUM_OF_PEER)
@@ -220,10 +225,12 @@ int main(int argc, char *argv[])
 						break;
 					}
 				}
+				// Condition if the content is new
 				else
 				{
 					if (numOfContent < MAX_NUM_OF_CONTENT)
 					{
+						// Add content to the next spot of the data base
 						fprintf(stderr, "Enter into Database\n");
 						fprintf(stderr, "readPeerName: %s\n", readPeerName);
 						fprintf(stderr, "readContentName: %s\n", readContentName);
@@ -272,6 +279,7 @@ int main(int argc, char *argv[])
 			printStructs();
 			break;
 		case 'T':
+			// Case T, Remove peer. 
 			i = 0;
 			int searchDelete = 0;
 			bzero(spdu.data, sizeof(spdu.data));
@@ -357,6 +365,7 @@ int main(int argc, char *argv[])
 				{
 					strcpy(contentList[deleteContentIndex].contentName, "");
 				}
+				// Send Ack
 				spdu.type = 'A';
 				strcpy(spdu.data, "Delete Success\0");
 				sendto(s, &spdu, sizeof(spdu), 0,
@@ -447,10 +456,13 @@ int main(int argc, char *argv[])
 
 			break;
 		case 'O':
+			// Case O, show registered files
 			fprintf(stderr, "Case O\n");
 			bzero(spdu.data, sizeof(spdu.data));
 			strcpy(spdu.data, "\0");
 			spdu.type = 'O';
+			
+			//Parse throught the contentent database
 			for (i = 0; i < MAX_NUM_OF_CONTENT; i++)
 			{
 				if (strcmp(contentList[i].contentName, "") != 0)
@@ -460,10 +472,12 @@ int main(int argc, char *argv[])
 					strcat(spdu.data, "\n");
 				}
 			}
+			//Send Packet with the registered content name. 
 			fprintf(stderr, "Sending: %c %s", spdu.type, spdu.data);
 			sendto(s, &spdu, sizeof(spdu), 0, (struct sockaddr *)&fsin, sizeof(fsin));
 			break;
 		case 'E':
+			// Case E, ERROR
 			fprintf(stderr, "Case E\n");
 			fprintf(stderr, "Error Received from Client: %s\n", rpdu.data);
 			spdu.type = 'E';
@@ -473,6 +487,7 @@ int main(int argc, char *argv[])
 				   (struct sockaddr *)&fsin, sizeof(fsin));
 			break;
 		default:
+			// Case default, ERROR should not get here
 			fprintf(stderr, "Default\n");
 			spdu.type = 'E';
 			strcpy(spdu.data, "Error: Default should not get here");
@@ -485,6 +500,7 @@ int main(int argc, char *argv[])
 }
 
 // print structures debug
+// For debug purposes to print the contents of the INDEX server
 void printStructs()
 {
 
@@ -510,6 +526,7 @@ void printStructs()
 	}
 }
 // init_lastUsed value
+// change lastUsed value to 0
 void init_lastUsed(int contentNum)
 {
 	printf("Looking for the next unused Peer.\n");

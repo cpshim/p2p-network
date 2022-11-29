@@ -146,6 +146,7 @@ int main(int argc, char **argv)
 			switch (spdu.type)
 			{
 			case 'R':
+				// Case R content de-registering
 				srand((unsigned)time(&t));
 				portNumTCP = (rand() % 40000) + 10000;
 				printf("Which file to register?\n");
@@ -207,6 +208,7 @@ int main(int argc, char **argv)
 					break;
 				}
 			case 'T':
+				// Case T content de-registering
 				printf("Which file to delete?\n");
 				scanf("%s", contentname);
 				if (strlen(contentname) > 10)
@@ -243,6 +245,7 @@ int main(int argc, char **argv)
 				}
 				break;
 			case 'O':
+				// case O content listing
 				strcat(spdu.data, "\0");
 				(void)write(s, &spdu, sizeof(spdu));
 				bzero(rpdu.data, sizeof(rpdu.data));
@@ -250,6 +253,7 @@ int main(int argc, char **argv)
 					fprintf(stderr, "recvfrom error\n");
 				else
 				{
+					// get back content list from server
 					fprintf(stderr, "Received Ack or Error in O  %c.\n", rpdu.type);
 					if (rpdu.type != 'O')
 					{
@@ -265,6 +269,7 @@ int main(int argc, char **argv)
 				break;
 
 			case 'S':
+				// case S send search to index server, request download, register content
 				bzero(rpdu.data, sizeof(rpdu.data));
 				printf("Tell me the content.\n");
 				scanf("%s", contentname);
@@ -281,6 +286,7 @@ int main(int argc, char **argv)
 				switch (rpdu.type)
 				{
 				case 'S':
+					// get back search result from server
 					printf("Case S.\n");
 					bzero(spdu.data, sizeof(spdu.data));
 					char readPeerName[10];
@@ -292,6 +298,7 @@ int main(int argc, char **argv)
 					int adrlenS = 0;
 					int portlenS = 0;
 
+					// get back search result from server
 					i = 0;
 					fprintf(stderr, "Before readPeerName while \n");
 					while (rpdu.data[i] != '$')
@@ -326,11 +333,13 @@ int main(int argc, char **argv)
 					strcpy(spdu.data, readPeerName);
 					strcat(spdu.data, "$");
 					strcat(spdu.data, contentname);
+					// check if you are the last peer with the file
 					if (!(strcmp(readPeerName, peername)))
 					{
 						printf("You already have this file!\n");
 						break;
 					}
+					// create a TCP client child process for the download
 					int portSint = atoi(readPort);
 					strcpy(childr[threadNum].content, contentname);
 					childr[threadNum].port = portNumTCP;
@@ -338,10 +347,11 @@ int main(int argc, char **argv)
 					switch (childr[threadNum].pid)
 					{
 					case 0: /* child */
+						// Call function for TCP download
 						TCPrec(portSint, contentname, spdu, readAddr);
 						printf("Downloaded file done. I am now going to be a host.\n");
 						sleep(1);
-						// make myself a host
+						// Register the downloaded content
 						bzero(spdu.data, sizeof(spdu.data));
 						spdu.type = 'R';
 						srand((unsigned)time(&t));
@@ -369,6 +379,7 @@ int main(int argc, char **argv)
 							}
 						}
 						fprintf(stderr, "Making a socket to register downloaded content\n");
+						// Open a TCP socket to become a TCP server
 						TCP(randum, contentname);
 						break;
 					default:
@@ -392,11 +403,12 @@ int main(int argc, char **argv)
 			case 'Q':
 				for (i = 0; i < MAXCONTENT; i++)
 				{
-					// reset spdu data
+					// Reset spdu data
 					bzero(spdu.data, sizeof(spdu.data));
 					// if not equal to null
 					fprintf(stderr, "Deleting from childr %d: %s\n", i, childr[i].content);
 					fprintf(stderr, "Content in childr %d: %s\n", i, childr[i].content);
+					// Send series of T packets
 					if (strcmp(childr[i].content, ""))
 					{
 						spdu.type = 'T';
@@ -421,6 +433,7 @@ int main(int argc, char **argv)
 							}
 							else
 							{
+								//Close child processes
 								printf("Attempting to kill thread\n");
 								closePID(childr[i].content);
 								printf("Successfully killed thread\n");
@@ -439,6 +452,7 @@ int main(int argc, char **argv)
 	}
 }
 
+// Opens a TCP socket for upload
 int TCP(int portTCP, char *contentname)
 {
 	int sd, new_sd, client_len;
@@ -494,6 +508,7 @@ int TCP(int portTCP, char *contentname)
 	}
 }
 
+// Kill a TCP child process (close a TCP socket)
 void closePID(char *contentname)
 {
 	printf("Checking %s.\n", contentname);
@@ -517,6 +532,7 @@ void closePID(char *contentname)
 	printf("Finished closing PID\n");
 }
 
+// Opens a TCP socket for download
 int TCPrec(int portTCP, char *contentname, pdu spdu, char *AddressS)
 {
 	fprintf(stderr, "Attempting to download %s.\n", contentname);
@@ -566,6 +582,7 @@ void reaper(int sig)
 		;
 }
 
+// Peer server: uses a TCP socket to read a local file and upload it to the client
 int peerServer(int sd, char *contentname)
 {
 	char *bp, sbuf[256], rbuf[100], fbuf[101];
@@ -618,7 +635,7 @@ int peerServer(int sd, char *contentname)
 
 	return (0);
 }
-
+// Peer Client: uses a TCP socket to write a local file from the downloaded packets
 int peerClient(int sd, char *contentname, pdu spdu)
 {
 	int n, i, bytes_to_read;
@@ -628,7 +645,7 @@ int peerClient(int sd, char *contentname, pdu spdu)
 	char *host, *bp, rbuf[BUFLEN], sbuf[101], hello[6], fbuf[100], cbuf[100];
 	FILE *filePointer;
 	fprintf(stderr, "Attempting to download file.\n");
-	filePointer = fopen(contentname, "w"); // create new file and open for
+	filePointer = fopen(contentname, "w"); // create new file and open for write
 	while (n = read(sd, sbuf, 101))
 	{
 		fprintf(stderr, "This is what was received: %s\n", sbuf);
